@@ -155,7 +155,7 @@ function ExtractReferredDialogs(dialog): string[] {
 }
 
 // check all fields
-function CheckFields(dialog, id: string, schema: any): Diagnostic[] {
+function CheckFields(id: string, dialog: { [key: string]: any }, schema: any): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   /**
    *
@@ -189,13 +189,13 @@ function CheckFields(dialog, id: string, schema: any): Diagnostic[] {
 
 function validate(id: string, content, schema: any): Diagnostic[] {
   try {
-    return CheckFields(content, id, schema);
+    return CheckFields(id, content, schema);
   } catch (error) {
     return [new Diagnostic(error.message, id)];
   }
 }
 
-function parse(id: string, content: any, schema: any) {
+function parse(id: string, content: { [key: string]: any }, schema: any) {
   return {
     id,
     content,
@@ -234,19 +234,7 @@ function index(files: FileInfo[], botName: string, schema: any): DialogInfo[] {
   return dialogs;
 }
 
-function parseSnippet(content: any) {
-  return {
-    referredDialogs: ExtractReferredDialogs(content),
-    lgTemplates: ExtractLgTemplates('$', content),
-    userDefinedVariables: ExtractMemoryPaths(content),
-    referredLuIntents: ExtractLuIntents(content, '$'),
-    triggers: ExtractTriggers(content),
-    intentTriggers: ExtractIntentTriggers(content),
-  };
-}
-
 export const dialogIndexer = {
   index,
   parse,
-  parseSnippet,
 };
