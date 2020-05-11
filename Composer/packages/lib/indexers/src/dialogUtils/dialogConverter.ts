@@ -3,7 +3,7 @@
 
 import has from 'lodash/has';
 import cloneDeep from 'lodash/cloneDeep';
-import { extractLgTemplateRefs } from '@bfc/shared';
+import { extractLgTemplateRefs, SDKKinds } from '@bfc/shared';
 
 import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
 import { getBaseName } from '../utils/help';
@@ -44,6 +44,16 @@ export function DialogConverter(dialog: IDialog, lgFileResolver, luFileResolver)
           }
         }
       });
+
+      // find lu
+      if (value.$kind === SDKKinds.OnIntent) {
+        const field = 'intent';
+        const intentName = value[field];
+        const intent = luFile ? luFile.intents.find(t => t.Name === intentName) : undefined; // else find in trigger
+        if (intent) {
+          value[`_virtual_${field}`] = intent.Body;
+        }
+      }
     }
     return false;
   };
