@@ -18,6 +18,7 @@ export const useActionApi = (shellApi: ShellApi) => {
   const { createLgTemplate, readLgTemplate, deleteLgTemplates } = useLgApi(shellApi);
   const { createLuIntent, readLuIntent, deleteLuIntents } = useLuApi(shellApi);
 
+  // TODO(zhixzhan): use virtual dialog property
   const luFieldName = '_lu';
 
   function actionsContainLuIntent(actions: BaseSchema[]): boolean {

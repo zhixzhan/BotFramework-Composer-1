@@ -15,6 +15,7 @@ import { isAbsHosted } from '../utils/envUtil';
 
 import { useLgApi } from './lgApi';
 import { useLuApi } from './luApi';
+import { useVirtualDialog } from './useVirtualDialog';
 
 const FORM_EDITOR = 'PropertyEditor';
 
@@ -42,13 +43,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   const updateDialog = actions.updateDialog;
 
   const { dialogId, selected, focused, promptTab } = designPageLocation;
-
-  const dialogsMap = useMemo(() => {
-    return dialogs.reduce((result, dialog) => {
-      result[dialog.id] = dialog.content;
-      return result;
-    }, {});
-  }, [dialogs]);
+  const dialogsMap = useVirtualDialog();
 
   async function updateRegExIntentHandler(id, intentName, pattern) {
     const dialog = dialogs.find(dialog => dialog.id === id);
@@ -58,6 +53,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   }
 
   function cleanData() {
+    // TODO(zhixzhan): prevent duplicate update.
     const cleanedData = sanitizeDialogData(dialogsMap[dialogId]);
     if (!isEqual(dialogsMap[dialogId], cleanedData)) {
       const payload = {
@@ -176,11 +172,14 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   };
 
   const currentDialog = useMemo(() => dialogs.find(d => d.id === dialogId), [dialogs, dialogId]);
+
   const editorData = useMemo(() => {
     return source === 'PropertyEditor'
       ? getDialogData(dialogsMap, dialogId, focused || selected || '')
       : getDialogData(dialogsMap, dialogId);
   }, [source, dialogsMap, dialogId, focused, selected]);
+
+  console.log(editorData);
 
   const data: ShellData = currentDialog
     ? {
