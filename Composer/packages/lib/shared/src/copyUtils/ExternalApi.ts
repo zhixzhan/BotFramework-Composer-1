@@ -21,6 +21,4 @@ export type FieldProcessorAsync<T> = (
 
 export interface ExternalApi {
   getDesignerId: (data?: DesignerData) => DesignerData;
-  copyLgField: FieldProcessorAsync<string>;
-  copyLuField: FieldProcessorAsync<any>;
 }

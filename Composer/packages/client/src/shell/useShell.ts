@@ -179,8 +179,6 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
       : getDialogData(dialogsMap, dialogId);
   }, [source, dialogsMap, dialogId, focused, selected]);
 
-  console.log(editorData);
-
   const data: ShellData = currentDialog
     ? {
         data: editorData,
