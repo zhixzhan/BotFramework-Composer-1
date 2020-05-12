@@ -7,6 +7,7 @@ import merge from 'lodash/merge';
 import { indexer, dialogIndexer, lgIndexer, luIndexer, autofixReferInDialog } from '@bfc/indexers';
 import { SensitiveProperties, LuFile, LgFile, DialogInfo, importResolverGenerator, UserSettings } from '@bfc/shared';
 import formatMessage from 'format-message';
+import { DialogConverterReverse } from '@bfc/indexers/lib/dialogUtils/dialogConverter';
 
 import { ActionTypes, FileTypes, BotStatus, Text, AppUpdaterStatus } from '../../constants';
 import { DialogSetting, ReducerFunc } from '../types';
@@ -184,10 +185,24 @@ const updateLuTemplate: ReducerFunc = (state, luFile: LuFile) => {
   return state;
 };
 
+/**
+ * content is virtual dialog, or we should implement another updateVirtualDialog
+ * {
+ *      "designer.id": "HVBVgK",
+ *      "activity": "${SendActivity_HVBVgK()}",
+ *      "_virtual_activity": "- hellosdfafdsfdsfsdf"
+ * }
+ *
+ * if _vProps is updated, update same id lg/lu
+ * if {} is deleted, delete same id lg/lu
+ * if {} is added, add same id lg/lu (depends slot a default value or not)
+ */
+
 const updateDialog: ReducerFunc = (state, { id, content }) => {
   state.dialogs = state.dialogs.map(dialog => {
     if (dialog.id === id) {
-      return { ...dialog, ...dialogIndexer.parse(dialog.id, content, state.schemas.sdk.content) };
+      const rawDialogContent = DialogConverterReverse(content);
+      return { ...dialog, ...dialogIndexer.parse(dialog.id, rawDialogContent, state.schemas.sdk.content) };
     }
     return dialog;
   });

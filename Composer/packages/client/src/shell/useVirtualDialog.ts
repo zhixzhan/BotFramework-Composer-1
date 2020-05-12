@@ -27,7 +27,7 @@ export function useVirtualDialog() {
     const newVDialog = createVirtualDialogs(state, lgFileResolver, luFileResolver);
 
     setVirtualDialogs(newVDialog);
-  }, [projectId, state.dialogs]);
+  }, [projectId, state.dialogs, state.lgFiles, state.luFiles]);
 
   const dialogsMap = virtualDialogs.reduce((result, dialog) => {
     result[dialog.id] = dialog.content;

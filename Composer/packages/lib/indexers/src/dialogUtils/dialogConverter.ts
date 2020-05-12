@@ -82,3 +82,31 @@ export function DialogConverter(
 
   return deDialog;
 }
+
+export function DialogConverterReverse(dialog: {
+  [key: string]: any;
+}): {
+  [key: string]: any;
+} {
+  const deDialog = cloneDeep(dialog);
+  /**
+   *
+   * @param path , jsonPath string
+   * @param value , current node value    *
+   * @return boolean, true to stop walk    */
+  const visitor: VisitorFunc = (_path: string, value: any): boolean => {
+    // it's a valid schema dialog node.
+
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      Object.keys(value).forEach(key => {
+        if (key.startsWith(VPropsPrefix)) {
+          delete value[key];
+        }
+      });
+    }
+    return false;
+  };
+  JsonWalk('$', deDialog, visitor);
+
+  return deDialog;
+}
