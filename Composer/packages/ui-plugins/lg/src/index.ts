@@ -6,7 +6,7 @@ import { SDKKinds } from '@bfc/shared';
 import { VisualEditorColors as Colors } from '@bfc/ui-shared';
 
 import { LgField } from './LgField';
-import { LgWidget } from './LgWidget';
+import { LgWidget, LgVirtualWidget } from './LgWidget';
 
 const config: PluginConfig = {
   formSchema: {
@@ -27,6 +27,7 @@ const config: PluginConfig = {
   visualSchema: {
     widgets: {
       LgWidget: LgWidget,
+      LgVirtualWidget: LgVirtualWidget,
     },
     schema: {
       [SDKKinds.SendActivity]: {
@@ -40,8 +41,8 @@ const config: PluginConfig = {
           },
         },
         body: {
-          widget: 'LgWidget',
-          field: 'activity',
+          widget: 'LgVirtualWidget',
+          field: '_virtual_activity',
         },
       },
     },

@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 
-export function normalizeLgTemplate(text: string): string {
+import { Template } from 'botbuilder-lg';
+
+export function normalizeLgBody(text: string): string {
   const templateTexts = text.split('\n').map(line => (line.startsWith('-') ? line.substring(1) : line));
   let showText = '';
 
@@ -11,4 +15,8 @@ export function normalizeLgTemplate(text: string): string {
     showText = templateTexts.join('\n');
   }
   return showText;
+}
+
+export function normalizeLgTemplate(template: Template): string {
+  return normalizeLgBody(template.body);
 }

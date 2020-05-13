@@ -5,18 +5,14 @@ import React from 'react';
 import get from 'lodash/get';
 import { WidgetContainerProps } from '@bfc/extension';
 
-import { useLgTemplate } from './useLgTemplate';
-
-export interface LgWidgetProps extends WidgetContainerProps {
+export interface LgVirtualWidgetProps extends WidgetContainerProps {
   /** indicates which field contains lg activity. ('activity', 'prompt', 'invalidPropmt'...) */
   field: string;
   defaultContent?: string;
 }
 
-export const LgWidget: React.FC<LgWidgetProps> = ({ data, field, defaultContent }) => {
-  const activityTemplate = get(data, field, '');
-
-  const templateText = useLgTemplate(activityTemplate);
+export const LgVirtualWidget: React.FC<LgVirtualWidgetProps> = ({ data, field, defaultContent }) => {
+  const templateText = get(data, field, '');
   const displayedText = templateText || defaultContent;
   return <>{displayedText}</>;
 };
