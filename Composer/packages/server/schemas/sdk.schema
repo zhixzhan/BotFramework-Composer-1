@@ -3898,6 +3898,16 @@
 				}
 			]
 		},
+		"Microsoft.IActivityVirtualTemplate": {
+			"title": "Microsoft ActivityTemplates",
+			"description": "Components which are ActivityTemplate, which is string template, an activity, or a implementation of ActivityTemplate",
+			"$role": "interface",
+			"oneOf": [
+				{
+					"type": "string"
+				}
+			]
+		},
 		"Microsoft.IDialog": {
 			"title": "Microsoft Dialogs",
 			"description": "Components which derive from Dialog",
@@ -7708,6 +7718,12 @@
 					"title": "Activity",
 					"description": "Activity to send.",
 					"$ref": "#/definitions/Microsoft.IActivityTemplate"
+				},
+				"_virtual_activity": {
+					"$kind": "Microsoft.IActivityVirtualTemplate",
+					"title": "Activity vir",
+					"description": "Activity vir to send.",
+					"$ref": "#/definitions/Microsoft.IActivityVirtualTemplate"
 				},
 				"$kind": {
 					"title": "Kind of dialog object",

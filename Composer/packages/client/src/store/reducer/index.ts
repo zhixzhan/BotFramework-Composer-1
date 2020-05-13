@@ -20,6 +20,7 @@ import {
 import formatMessage from 'format-message';
 import { DialogDiff } from '@bfc/indexers/lib/dialogUtils/dialogDiff';
 import { ExtractLgTemplates, ExtractLuIntents } from '@bfc/indexers/lib/dialogUtils/extractResources';
+import { DialogConverterReverse } from '@bfc/indexers/lib/dialogUtils/dialogConverter';
 
 import * as lgUtil from '../../utils/lgUtil';
 import * as luUtil from '../../utils/luUtil';
@@ -199,6 +200,19 @@ const updateLuTemplate: ReducerFunc = (state, luFile: LuFile) => {
 };
 
 // TODO:(zhixzhan): mark to refactor
+/**
+ * content is virtual dialog, or we should implement another updateVirtualDialog
+ * {
+ *      "designer.id": "HVBVgK",
+ *      "activity": "${SendActivity_HVBVgK()}",
+ *      "_virtual_activity": "- hellosdfafdsfdsfsdf"
+ * }
+ *
+ * if _vProps is updated, update same id lg/lu
+ * if {} is deleted, delete same id lg/lu
+ * if {} is added, add same id lg/lu (depends slot a default value or not)
+ */
+
 const updateDialog: ReducerFunc = (state, { id, content }) => {
   const { dialogs, lgFiles, luFiles, locale } = state;
   const prevContent = dialogs.find(d => d.id === id)?.content;
@@ -285,7 +299,8 @@ const updateDialog: ReducerFunc = (state, { id, content }) => {
 
   state.dialogs = state.dialogs.map(dialog => {
     if (dialog.id === id) {
-      return { ...dialog, ...dialogIndexer.parse(dialog.id, content, state.schemas.sdk.content) };
+      const rawDialogContent = DialogConverterReverse(content);
+      return { ...dialog, ...dialogIndexer.parse(dialog.id, rawDialogContent, state.schemas.sdk.content) };
     }
     return dialog;
   });

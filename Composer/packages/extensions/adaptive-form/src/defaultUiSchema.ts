@@ -136,7 +136,7 @@ const DefaultUISchema: UISchema = {
   [SDKKinds.OnActivity]: {
     ...triggerUiSchema,
     label: () => formatMessage('Activities'),
-    subtitle: () => formatMessage('Activity recieved'),
+    subtitle: () => formatMessage('Activity received'),
   },
   [SDKKinds.OnBeginDialog]: {
     ...triggerUiSchema,
@@ -253,7 +253,8 @@ const DefaultUISchema: UISchema = {
   [SDKKinds.SendActivity]: {
     label: () => formatMessage('Send a response'),
     helpLink: 'https://aka.ms/bfc-send-activity',
-    order: ['activity', '*'],
+    order: ['_virtual_activity', '*'],
+    hidden: ['activity'],
   },
   [SDKKinds.SetProperty]: {
     label: () => formatMessage('Set a Property'),
