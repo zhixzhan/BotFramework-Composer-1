@@ -5,22 +5,9 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 import merge from 'lodash/merge';
 import { indexer, dialogIndexer, lgIndexer, luIndexer, autofixReferInDialog } from '@bfc/indexers';
-import {
-  SensitiveProperties,
-  LuFile,
-  LgFile,
-  DialogInfo,
-  importResolverGenerator,
-  UserSettings,
-  SDKKinds,
-  LgMetaData,
-  LgType,
-  LgTemplate,
-} from '@bfc/shared';
+import { SensitiveProperties, LuFile, LgFile, DialogInfo, importResolverGenerator, UserSettings } from '@bfc/shared';
 import formatMessage from 'format-message';
-import { DialogDiff } from '@bfc/indexers/lib/dialogUtils/dialogDiff';
-import { ExtractLgTemplates, ExtractLuIntents } from '@bfc/indexers/lib/dialogUtils/extractResources';
-import { DialogConverterReverse } from '@bfc/indexers/lib/dialogUtils/dialogConverter';
+import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 
 import * as lgUtil from '../../utils/lgUtil';
 import * as luUtil from '../../utils/luUtil';
@@ -213,51 +200,22 @@ const updateLuTemplate: ReducerFunc = (state, luFile: LuFile) => {
  * if {} is added, add same id lg/lu (depends slot a default value or not)
  */
 
-const updateDialog: ReducerFunc = (state, { id, content }) => {
-  const { dialogs, lgFiles, luFiles, locale } = state;
-  const prevContent = dialogs.find(d => d.id === id)?.content;
+const updateVirtualDialog: ReducerFunc = (state, { id, content, prevContent }) => {
+  const { lgFiles, luFiles, locale } = state;
   const dialogLgFile = lgFiles.find(f => f.id === `${id}.${locale}`);
   const dialogLuFile = luFiles.find(f => f.id === `${id}.${locale}`);
 
-  if (!prevContent) {
-    throw new Error(`dialog file "${id}" not found`);
-  }
-
   /******** use diff find out current dialog related external resource updates (lg/lu) ************/
-  const diffs = DialogDiff(prevContent, content);
-  console.log('dialog diffs result: ', diffs);
+  const changes = DialogResourceChanges(prevContent, content);
 
-  const { adds, deletes } = diffs;
-
-  const deletesTemplateNames: string[] = []; // lg need to delete
-  const addsTemplateNames: LgTemplate[] = []; // lg need to add
-  const deletesLuIntentNames: string[] = []; // lu need to delete
-
-  for (const item of deletes) {
-    deletesTemplateNames.push(...ExtractLgTemplates(id, item.value).map(({ name }) => name)); // if delete dialog node, delete lg template it contains
-    deletesLuIntentNames.push(...ExtractLuIntents(id, item.value).map(({ name }) => name)); // if delete dialog node, delete lu intent it contains
-  }
-  // create lg template if added dialog node needs
-  for (const item of adds) {
-    const kind = item.value.$kind;
-    const designerId = get(item.value, '$designer.id');
-    if (kind === SDKKinds.SendActivity) {
-      const lgType = new LgType(kind, '').toString();
-      const lgName = new LgMetaData(lgType, designerId || '').toString();
-      const lgTemplate: LgTemplate = { name: lgName, body: '- hi', parameters: [] };
-      addsTemplateNames.push(lgTemplate);
-    }
-  }
-  console.log('dialog triggered lg templates adds: ', addsTemplateNames);
-  console.log('dialog triggered lg templates deletes: ', deletesTemplateNames);
-  console.log('dialog triggered lu intents deletes: ', deletesLuIntentNames);
-  /******** use diff end ************/
+  console.log('dialog resourse changes: ', changes);
 
   /******** update dialog's lg************/
   if (dialogLgFile) {
     const lgImportresolver = importResolverGenerator(lgFiles, '.lg', locale);
-    let newContent = lgUtil.removeTemplates(dialogLgFile.content, deletesTemplateNames);
-    newContent = lgUtil.addTemplates(newContent, addsTemplateNames);
+    let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
+    newContent = lgUtil.addTemplates(newContent, changes.lg.adds);
+    newContent = lgUtil.updateTemplates(newContent, changes.lg.updates);
 
     const newFiles = lgFiles.map(f => {
       if (f.id === dialogLgFile.id) {
@@ -278,7 +236,7 @@ const updateDialog: ReducerFunc = (state, { id, content }) => {
 
   /******** update dialog's lu ************/
   if (dialogLuFile) {
-    const newContent = luUtil.removeIntents(dialogLuFile.content, deletesLuIntentNames);
+    const newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
 
     const newFiles = luFiles.map(f => {
       if (f.id === dialogLuFile.id) {
@@ -301,6 +259,16 @@ const updateDialog: ReducerFunc = (state, { id, content }) => {
     if (dialog.id === id) {
       const rawDialogContent = DialogConverterReverse(content);
       return { ...dialog, ...dialogIndexer.parse(dialog.id, rawDialogContent, state.schemas.sdk.content) };
+    }
+    return dialog;
+  });
+  return state;
+};
+
+const updateDialog: ReducerFunc = (state, { id, content }) => {
+  state.dialogs = state.dialogs.map(dialog => {
+    if (dialog.id === id) {
+      return { ...dialog, ...dialogIndexer.parse(dialog.id, content, state.schemas.sdk.content) };
     }
     return dialog;
   });
@@ -701,6 +669,7 @@ export const reducer = createReducer({
   [ActionTypes.CREATE_DIALOG_CANCEL]: createDialogCancel,
   [ActionTypes.CREATE_DIALOG]: createDialog,
   [ActionTypes.UPDATE_DIALOG]: updateDialog,
+  [ActionTypes.UPDATE_VIRTUAL_DIALOG]: updateVirtualDialog,
   [ActionTypes.REMOVE_DIALOG]: removeDialog,
   [ActionTypes.GET_STORAGE_SUCCESS]: getStoragesSuccess,
   [ActionTypes.GET_STORAGE_FAILURE]: noOp,

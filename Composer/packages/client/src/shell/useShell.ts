@@ -41,6 +41,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   const lgApi = useLgApi();
   const luApi = useLuApi();
   const updateDialog = actions.updateDialog;
+  const updateVirtualDialog = actions.updateVirtualDialog;
 
   const { dialogId, selected, focused, promptTab } = designPageLocation;
   const dialogsMap = useVirtualDialog();
@@ -122,13 +123,15 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
       }
 
       const updatedDialog = setDialogData(dialogMapRef.current, dialogId, dataPath, newData);
+      const prevDialog = getDialogData(dialogMapRef.current, dialogId);
       const payload = {
         id: dialogId,
         content: updatedDialog,
+        prevContent: prevDialog, // for compare
         projectId,
       };
       dialogMapRef.current[dialogId] = updatedDialog;
-      updateDialog(payload);
+      updateVirtualDialog(payload);
 
       //make sure focusPath always valid
       const data = getDialogData(dialogMapRef.current, dialogId, getFocusPath(selected, focused));
@@ -175,11 +178,13 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   const currentDialog = useMemo(() => dialogs.find(d => d.id === dialogId), [dialogs, dialogId]);
 
   const editorData = useMemo(() => {
+    console.log(dialogsMap);
     return source === 'PropertyEditor'
       ? getDialogData(dialogsMap, dialogId, focused || selected || '')
       : getDialogData(dialogsMap, dialogId);
   }, [source, dialogsMap, dialogId, focused, selected]);
 
+  console.log(editorData);
   const data: ShellData = currentDialog
     ? {
         data: editorData,

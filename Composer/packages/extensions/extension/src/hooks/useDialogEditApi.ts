@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { BaseSchema, DialogUtils, ShellApi } from '@bfc/shared';
+import { BaseSchema, DialogUtils } from '@bfc/shared';
 
 import { useActionApi } from './useActionApi';
 
@@ -12,8 +12,8 @@ export interface DialogApiContext {
 
 const { appendNodesAfter, queryNodes, insertNodes, deleteNode, deleteNodes } = DialogUtils;
 
-export function useDialogEditApi(shellApi: ShellApi) {
-  const { constructActions, copyActions } = useActionApi(shellApi);
+export function useDialogEditApi() {
+  const { constructActions, copyActions } = useActionApi();
 
   async function insertActions(
     dialogId: string,

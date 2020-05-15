@@ -57,6 +57,7 @@ export const defaultFlowSchema: FlowSchema = {
   },
   [SDKKinds.SendActivity]: {
     widget: 'ActionCard',
+    // TODO(zhixzhan): mark to replace with virtual dialog
     body: data => data.activity,
   },
   [SDKKinds.AttachmentInput]: BaseInputSchema,

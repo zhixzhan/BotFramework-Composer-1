@@ -4,7 +4,15 @@
 import has from 'lodash/has';
 import get from 'lodash/get';
 import cloneDeep from 'lodash/cloneDeep';
-import { extractLgTemplateRefs, SDKKinds, LgType, LgTemplate, LgMetaData, LuIntentSection } from '@bfc/shared';
+import {
+  extractLgTemplateRefs,
+  SDKKinds,
+  LgType,
+  LgTemplate,
+  LgMetaData,
+  LuIntentSection,
+  LgTemplateRef,
+} from '@bfc/shared';
 
 import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
 import { getBaseName } from '../utils/help';
@@ -30,6 +38,22 @@ export const setVPropsByField = (data, field, fieldValue) => {
   data[virtualField] = fieldValue;
   return data;
 };
+
+const getFeildLgRefName = (data, field): string => {
+  const $kind = data?.$kind;
+  const designerId = get(data, '$designer.id');
+  if (!$kind || !designerId) return '';
+  const lgType = new LgType($kind, field).toString();
+  return new LgMetaData(lgType, designerId).toString();
+};
+
+// const getFeildLuRefName = (data, field): string => {
+//   const $kind = data?.$kind;
+//   const designerId = get(data, '$designer.id');
+//   if (!$kind || !designerId) return '';
+//   const lgType = new LgType($kind, field).toString();
+//   return new LgMetaData(lgType, designerId).toString();
+// };
 
 /**
  * compare two dialog node, find virtual property changes in it.
@@ -90,12 +114,20 @@ export function DialogResourceChanges(
 
     if (VirtualLGFields.includes(vPropName)) {
       const lgTemplateRef = extractLgTemplateRefs(propValue);
-      if (lgTemplateRef.length === 1) {
-        const lgName = lgTemplateRef[0].name;
-        const lgBody = vPropValue;
-        const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
-        updateTemplates.push(lgTemplate);
+      let lgName = '';
+      if (lgTemplateRef.length === 0) {
+        const dialogItem = get(dialog2, nodePath);
+        lgName = getFeildLgRefName(dialogItem, propName);
       }
+
+      // length 0 means activity is initial value, havent slot with ${SendActivity_12355},
+      if (lgTemplateRef.length === 1) {
+        lgName = lgTemplateRef[0].name;
+      }
+
+      const lgBody = vPropValue;
+      const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
+      updateTemplates.push(lgTemplate);
     } else if (VirtualLUFields.includes(vPropName)) {
       const luName = propValue;
       const luBody = vPropValue;
@@ -164,18 +196,30 @@ export function DialogConverter(
     // it's a valid schema dialog node.
     if (has(value, '$kind')) {
       if (lgFile) {
-        // find lg templates and add _virtial_[prop]
+        // find lg templates in [prop], add _virtial_[prop]
         LGTemplateFields.forEach(field => {
           if (has(value, field)) {
-            const lgTemplateRef = extractLgTemplateRefs(value[field]);
-            // only replace single lgTemplateRef case "${}"
-            if (lgTemplateRef.length === 1) {
-              const lgTemplate = lgFile.templates.find(t => t.name === lgTemplateRef[0].name);
-              // refered lg is in same name lg File.
-              if (lgTemplate) {
-                setVPropsByField(value, field, lgTemplate.body);
-              }
+            const propValue = value[field];
+            let vPropValue = propValue;
+            let lgName = '';
+            const lgTemplateRef = extractLgTemplateRefs(propValue);
+
+            // activity: '' is empty, slot default
+            if (lgTemplateRef.length === 0) {
+              lgName = getFeildLgRefName(value, field);
+              value[field] = new LgTemplateRef(lgName).toString();
             }
+            // activity: "${SendActivity_34235}"
+            else if (lgTemplateRef.length === 1) {
+              lgName = lgTemplateRef[0].name;
+            }
+
+            const lgTemplate = lgFile.templates.find(t => t.name === lgName);
+            // refered lg is in same name lg File.
+            if (lgTemplate) {
+              vPropValue = lgTemplate.body;
+            }
+            setVPropsByField(value, field, vPropValue);
           }
         });
       }

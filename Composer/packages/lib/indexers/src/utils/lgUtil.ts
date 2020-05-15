@@ -43,6 +43,20 @@ export function updateTemplate(
   }
 }
 
+export function updateTemplates(content: string, templates: LgTemplate[]): string {
+  const resource = Templates.parseText(content);
+
+  templates.forEach(({ name, body, parameters }) => {
+    // add if not exist
+    if (resource.toArray().findIndex(t => t.name === name) === -1) {
+      resource.addTemplate(name, parameters, body);
+    } else {
+      resource.updateTemplate(name, name, parameters, body);
+    }
+  });
+  return resource.toString();
+}
+
 // if name exist, throw error.
 export function addTemplate(content: string, { name, parameters = [], body }: LgTemplate): string {
   const resource = Templates.parseText(content);

@@ -51,9 +51,9 @@ export const ObiEditor: FC<ObiEditorProps> = ({
     deleteSelectedAction,
     deleteSelectedActions,
     updateRecognizer,
-  } = useDialogEditApi(shellApi);
+  } = useDialogEditApi();
   const { createDialog, readDialog, updateDialog } = useDialogApi(shellApi);
-  const { actionsContainLuIntent } = useActionApi(shellApi);
+  const { actionsContainLuIntent } = useActionApi();
 
   const trackActionChange = (actionPath: string) => {
     const affectedPaths = DialogUtils.getParentPaths(actionPath);

@@ -31,6 +31,13 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
   });
 };
 
+export const updateVirtualDialog: ActionCreator = async (store, { id, content, prevContent }) => {
+  store.dispatch({
+    type: ActionTypes.UPDATE_VIRTUAL_DIALOG,
+    payload: { id, content, prevContent },
+  });
+};
+
 export const updateDialog: ActionCreator = undoable(
   updateDialogBase,
   (state: State, args: any[], isEmpty) => {

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 import cloneDeep from 'lodash/cloneDeep';
 import { useContext, useEffect, useState } from 'react';
-import { DialogConverter } from '@bfc/indexers/lib/dialogUtils/dialogConverter';
+import { DialogConverter } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 
 import { State } from '../store/types';
 import { StoreContext } from '../store';
@@ -34,5 +34,6 @@ export function useVirtualDialog() {
     return result;
   }, {});
 
+  console.log(dialogsMap);
   return dialogsMap;
 }
