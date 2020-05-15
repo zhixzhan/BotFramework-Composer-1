@@ -4,8 +4,17 @@
 import get from 'lodash/get';
 import set from 'lodash/set';
 import merge from 'lodash/merge';
+import memoize from 'lodash/memoize';
 import { indexer, dialogIndexer, lgIndexer, luIndexer, autofixReferInDialog } from '@bfc/indexers';
-import { SensitiveProperties, LuFile, LgFile, DialogInfo, importResolverGenerator, UserSettings } from '@bfc/shared';
+import {
+  SensitiveProperties,
+  LuFile,
+  LgFile,
+  DialogInfo,
+  importResolverGenerator,
+  UserSettings,
+  dereferenceDefinitions,
+} from '@bfc/shared';
 import formatMessage from 'format-message';
 import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 
@@ -23,6 +32,11 @@ import { isElectron } from '../../utils/electronUtil';
 import createReducer from './createReducer';
 
 const projectFiles = ['bot', 'botproj'];
+
+const processSchema = memoize((projectId: string, schema: any) => ({
+  ...schema,
+  definitions: dereferenceDefinitions(schema.definitions),
+}));
 
 // if user set value in terminal or appsetting.json, it should update the value in localStorage
 const refreshLocalStorage = (botName: string, settings: DialogSetting) => {
@@ -69,7 +83,8 @@ const initLuFilesStatus = (botName: string, luFiles: LuFile[], dialogs: DialogIn
 };
 
 const getProjectSuccess: ReducerFunc = (state, { response }) => {
-  const { files, botName, botEnvironment, location, schemas, settings, id, locale } = response.data;
+  const { files, botName, botEnvironment, location, schemas, settings, id, locale, diagnostics } = response.data;
+  schemas.sdk.content = processSchema(id, schemas.sdk.content);
   const { dialogs, luFiles, lgFiles, skillManifestFiles } = indexer.index(files, botName, schemas.sdk.content, locale);
   state.projectId = id;
   state.dialogs = dialogs;
@@ -83,6 +98,7 @@ const getProjectSuccess: ReducerFunc = (state, { response }) => {
   state.luFiles = initLuFilesStatus(botName, luFiles, dialogs);
   state.settings = settings;
   state.locale = locale;
+  state.diagnostics = diagnostics;
   state.skillManifests = skillManifestFiles;
   refreshLocalStorage(botName, state.settings);
   mergeLocalStorage(botName, state.settings);
@@ -457,6 +473,16 @@ const removeSkillManifest: ReducerFunc = (state, { id }) => {
   return state;
 };
 
+const displaySkillManifestModal: ReducerFunc = (state, { id }) => {
+  state.displaySkillManifest = id;
+  return state;
+};
+
+const dismissSkillManifestModal: ReducerFunc = state => {
+  delete state.displaySkillManifest;
+  return state;
+};
+
 const syncEnvSetting: ReducerFunc = (state, { settings }) => {
   state.settings = settings;
   return state;
@@ -521,10 +547,11 @@ const publishSuccess: ReducerFunc = (state, payload) => {
   return state;
 };
 
-const publishFailure: ReducerFunc = (state, { error, target }) => {
+const publishFailure: (title: string) => ReducerFunc = title => (state, { error, target }) => {
   if (target.name === 'default') {
     state.botStatus = BotStatus.failed;
-    state.botLoadErrorMsg = { title: Text.CONNECTBOTFAILURE, message: error.message };
+
+    state.botLoadErrorMsg = { ...error, title };
   }
   // prepend the latest publish results to the history
   if (!state.publishHistory[target.name]) {
@@ -702,7 +729,8 @@ export const reducer = createReducer({
   [ActionTypes.USER_SESSION_EXPIRED]: setUserSessionExpired,
   [ActionTypes.GET_PUBLISH_TYPES_SUCCESS]: setPublishTypes,
   [ActionTypes.PUBLISH_SUCCESS]: publishSuccess,
-  [ActionTypes.PUBLISH_FAILED]: publishFailure,
+  [ActionTypes.PUBLISH_FAILED]: publishFailure(Text.CONNECTBOTFAILURE),
+  [ActionTypes.PUBLISH_FAILED_DOTNET]: publishFailure(Text.DOTNETFAILURE),
   [ActionTypes.GET_PUBLISH_STATUS]: getPublishStatus,
   [ActionTypes.GET_PUBLISH_STATUS_FAILED]: getPublishStatus,
   [ActionTypes.GET_PUBLISH_HISTORY]: getPublishHistory,
@@ -720,4 +748,6 @@ export const reducer = createReducer({
   [ActionTypes.SET_APP_UPDATE_PROGRESS]: setAppUpdateProgress,
   [ActionTypes.SET_APP_UPDATE_SHOWING]: setAppUpdateShowing,
   [ActionTypes.SET_APP_UPDATE_STATUS]: setAppUpdateStatus,
+  [ActionTypes.DISPLAY_SKILL_MANIFEST_MODAL]: displaySkillManifestModal,
+  [ActionTypes.DISMISS_SKILL_MANIFEST_MODAL]: dismissSkillManifestModal,
 });

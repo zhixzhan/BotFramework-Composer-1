@@ -3,7 +3,7 @@
 
 /** @jsx jsx */
 import { jsx } from '@emotion/core';
-import React, { Suspense, useContext, useEffect, useMemo, useState, useRef } from 'react';
+import React, { Suspense, useContext, useEffect, useMemo, useState } from 'react';
 import { Breadcrumb, IBreadcrumbItem } from 'office-ui-fabric-react/lib/Breadcrumb';
 import formatMessage from 'format-message';
 import { globalHistory, RouteComponentProps } from '@reach/router';
@@ -41,8 +41,9 @@ import {
 import { VisualEditor } from './VisualEditor';
 import { PropertyEditor } from './PropertyEditor';
 
-const AddSkillDialog = React.lazy(() => import('./addSkillDialogModal'));
+const CreateSkillModal = React.lazy(() => import('../../components/SkillForm/CreateSkillModal'));
 const CreateDialogModal = React.lazy(() => import('./createDialogModal'));
+const DisplayManifestModal = React.lazy(() => import('../../components/Modal/DisplayManifest'));
 const ExportSkillModal = React.lazy(() => import('./exportSkillModal'));
 const TriggerCreationModal = React.lazy(() => import('../../components/ProjectTree/TriggerCreationModal'));
 
@@ -82,9 +83,18 @@ const getTabFromFragment = () => {
 
 const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: string }>> = props => {
   const { state, actions } = useContext(StoreContext);
-  const visualPanelRef: React.RefObject<HTMLDivElement> = useRef<HTMLDivElement>(null);
-  const { dialogs, designPageLocation, breadcrumb, visualEditorSelection, projectId, schemas, focusPath } = state;
   const {
+    dialogs,
+    displaySkillManifest,
+    breadcrumb,
+    visualEditorSelection,
+    projectId,
+    schemas,
+    focusPath,
+    designPageLocation,
+  } = state;
+  const {
+    dismissManifestModal,
     removeDialog,
     setDesignPageLocation,
     navTo,
@@ -94,8 +104,9 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
     clearUndoHistory,
     onboardingAddCoachMarkRef,
   } = actions;
-  const { location } = props;
-  const { dialogId, selected } = designPageLocation;
+  const { location, dialogId } = props;
+  const params = new URLSearchParams(location?.search);
+  const selected = params.get('selected') || '';
   const [triggerModalVisible, setTriggerModalVisibility] = useState(false);
   const [dialogJsonVisible, setDialogJsonVisibility] = useState(false);
   const [currentDialog, setCurrentDialog] = useState<DialogInfo>(dialogs[0]);
@@ -116,10 +127,10 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
 
   useEffect(() => {
     const index = currentDialog.triggers.findIndex(({ type }) => type === SDKKinds.OnBeginDialog);
-    if (index >= 0) {
+    if (index >= 0 && !designPageLocation.selected) {
       selectTo(createSelectedPath(index));
     }
-  }, [currentDialog?.id]);
+  }, [currentDialog?.id, designPageLocation]);
 
   useEffect(() => {
     if (location && props.dialogId && props.projectId) {
@@ -175,9 +186,6 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
       selectTo(selected);
     } else {
       navTo(id);
-    }
-    if (visualPanelRef.current) {
-      visualPanelRef.current.focus();
     }
   }
 
@@ -412,7 +420,7 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
           />
           <Conversation css={editorContainer}>
             <div css={editorWrapper}>
-              <div css={visualPanel} ref={visualPanelRef} tabIndex={0}>
+              <div css={visualPanel}>
                 {breadcrumbItems}
                 {dialogJsonVisible ? (
                   <JsonEditor
@@ -442,8 +450,11 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
           />
         )}
         {state.showAddSkillDialogModal && (
-          <AddSkillDialog
+          <CreateSkillModal
             isOpen={state.showAddSkillDialogModal}
+            skills={state.skills}
+            projectId={projectId}
+            editIndex={-1}
             onDismiss={() => actions.addSkillDialogCancel()}
             onSubmit={handleAddSkillDialogSubmit}
           />
@@ -462,6 +473,9 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
             onDismiss={onTriggerCreationDismiss}
             onSubmit={onTriggerCreationSubmit}
           />
+        )}
+        {displaySkillManifest && (
+          <DisplayManifestModal manifestId={displaySkillManifest} onDismiss={dismissManifestModal} />
         )}
       </Suspense>
     </React.Fragment>

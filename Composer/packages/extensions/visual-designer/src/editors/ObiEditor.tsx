@@ -38,8 +38,6 @@ export const ObiEditor: FC<ObiEditorProps> = ({
   redo,
   announce,
 }): JSX.Element | null => {
-  let divRef;
-
   const { focusedId, focusedEvent, clipboardActions, dialogFactory } = useContext(NodeRendererContext);
   const { shellApi } = useShellApi();
   const {
@@ -54,6 +52,12 @@ export const ObiEditor: FC<ObiEditorProps> = ({
   } = useDialogEditApi();
   const { createDialog, readDialog, updateDialog } = useDialogApi(shellApi);
   const { actionsContainLuIntent } = useActionApi();
+  const divRef = useRef<HTMLDivElement>(null);
+
+  // send focus to the keyboard area when navigating to a new trigger
+  useEffect(() => {
+    divRef.current?.focus();
+  }, [focusedEvent]);
 
   const trackActionChange = (actionPath: string) => {
     const affectedPaths = DialogUtils.getParentPaths(actionPath);
@@ -364,10 +368,9 @@ export const ObiEditor: FC<ObiEditorProps> = ({
   if (!data) return renderFallbackContent();
   return (
     <SelectionContext.Provider value={selectionContext}>
-      <KeyboardZone onCommand={handleKeyboardCommand}>
+      <KeyboardZone onCommand={handleKeyboardCommand} ref={divRef}>
         <MarqueeSelection selection={selection} css={{ width: '100%', height: '100%' }}>
           <div
-            tabIndex={0}
             className="obi-editor-container"
             data-testid="obi-editor-container"
             css={{
@@ -375,9 +378,7 @@ export const ObiEditor: FC<ObiEditorProps> = ({
               height: '100%',
               padding: '48px 20px',
               boxSizing: 'border-box',
-              '&:focus': { outline: 'none' },
             }}
-            ref={el => (divRef = el)}
             onClick={e => {
               e.stopPropagation();
               dispatchEvent(NodeEventTypes.Focus, { id: '' });
@@ -387,7 +388,7 @@ export const ObiEditor: FC<ObiEditorProps> = ({
               id={path}
               data={data}
               onEvent={(eventName, eventData) => {
-                divRef.focus({ preventScroll: true });
+                divRef.current?.focus({ preventScroll: true });
                 dispatchEvent(eventName, eventData);
               }}
             />
@@ -403,7 +404,6 @@ ObiEditor.defaultProps = {
   data: {},
   focusedSteps: [],
   onFocusSteps: () => {},
-  focusedEvent: '',
   onFocusEvent: () => {},
   onClipboardChange: () => {},
   onOpen: () => {},
@@ -420,7 +420,6 @@ interface ObiEditorProps {
   data: any;
   focusedSteps: string[];
   onFocusSteps: (stepIds: string[], fragment?: string) => any;
-  focusedEvent: string;
   onFocusEvent: (eventId: string) => any;
   onClipboardChange: (actions: any[]) => void;
   onCreateDialog: (actions: any[]) => Promise<string | null>;

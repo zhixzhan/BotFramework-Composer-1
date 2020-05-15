@@ -84,7 +84,7 @@ export const defaultFlowSchema: FlowSchema = {
         </>
       ) : null,
   },
-  [SDKKinds.SkillDialog]: {
+  [SDKKinds.BeginSkill]: {
     widget: 'ActionCard',
     colors: { theme: ObiColors.DarkBlue, color: ObiColors.White, icon: ObiColors.White },
     icon: 'Library',
