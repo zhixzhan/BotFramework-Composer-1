@@ -47,6 +47,18 @@ const getFeildLgRefName = (data, field): string => {
   return new LgMetaData(lgType, designerId).toString();
 };
 
+const serilizeLgRefByDesignerId = value => {
+  if (has(value, '$kind')) {
+    // serilize lg ref
+    LGTemplateFields.forEach(field => {
+      if (has(value, field)) {
+        const lgName = getFeildLgRefName(value, field);
+        value[field] = new LgTemplateRef(lgName).toString();
+      }
+    });
+  }
+};
+
 // const getFeildLuRefName = (data, field): string => {
 //   const $kind = data?.$kind;
 //   const designerId = get(data, '$designer.id');
@@ -143,16 +155,26 @@ export function DialogResourceChanges(
 
   // create lg template if added dialog node needs
   for (const item of adds) {
+    const dialogItem = item.value;
     const kind = item.value.$kind;
     const designerId = get(item.value, '$designer.id');
-    // TODO: default value should comes from vProps
-    if (kind === SDKKinds.SendActivity) {
-      const lgType = new LgType(kind, '').toString();
-      const lgName = new LgMetaData(lgType, designerId || '').toString();
-      const lgBody = '- hi, created';
-      const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
-      addTemplates.push(lgTemplate);
-    }
+
+    Object.keys(dialogItem).forEach(propName => {
+      const propValue = dialogItem[propName];
+      const vPropValue = getVPropsByField(dialogItem, propName);
+      if (LGTemplateFields.includes(propName)) {
+        const lgType = new LgType(kind, '').toString();
+        const lgName = new LgMetaData(lgType, designerId || '').toString();
+        const lgBody = vPropValue;
+        const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
+        addTemplates.push(lgTemplate);
+      } else if (LUIntentFields.includes(propName)) {
+        const luName = propValue;
+        const luBody = vPropValue;
+        const luIntent: LuIntentSection = { Name: luName, Body: luBody };
+        addIntents.push(luIntent);
+      }
+    });
   }
 
   return {
@@ -243,6 +265,13 @@ export function DialogConverter(
   return deDialog;
 }
 
+/**
+ *
+ * @param dialog
+ * 1. remove vProps
+ * 2. serilize ref: ${SendActivity-designerId}
+ *
+ */
 export function DialogConverterReverse(dialog: {
   [key: string]: any;
 }): {
@@ -263,6 +292,7 @@ export function DialogConverterReverse(dialog: {
           delete value[key];
         }
       });
+      serilizeLgRefByDesignerId(value);
     }
     return false;
   };

@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/camelcase */
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import fs from 'fs';
 
 import get from 'lodash/get';
 
-import { JsonSet } from '../../src/dialogUtils/jsonDiff';
+import { JsonSet, JsonInsert } from '../../src/dialogUtils/jsonDiff';
 import { DialogConverter, DialogConverterReverse, DialogResourceChanges } from '../../src/dialogUtils/virtualDialog';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
@@ -36,7 +37,7 @@ describe('Virtual Dialog Convert', () => {
       '[Activity'
     );
 
-    expect(get(convertedDialog, 'triggers[6].actions[0].prompt')).toEqual('${TextInput_Prompt_107784()}');
+    expect(get(convertedDialog, 'triggers[6].actions[0].prompt')).toEqual('${ConfirmInput_Prompt_107784()}');
     expect(get(convertedDialog, 'triggers[6].actions[0]._virtual_prompt')).toContain(
       '- Are you sure you want to cancel?'
     );
@@ -53,7 +54,7 @@ describe('Virtual Dialog Convert', () => {
 });
 
 describe('Virtual Dialog Resources', () => {
-  it('update on virtual property', () => {
+  it('update by virtual property', () => {
     const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
     const insert1 = [
       { path: 'triggers[0].actions[0].actions[0].actions[0]._virtual_activity', value: '- updated!' },
@@ -69,12 +70,41 @@ describe('Virtual Dialog Resources', () => {
     expect(changes.lg.deletes.length).toEqual(0);
     expect(changes.lg.updates[0].name).toEqual('SendActivity_202664');
     expect(changes.lg.updates[0].body).toEqual('- updated!');
-    expect(changes.lg.updates[1].name).toEqual('TextInput_Prompt_107784');
+    expect(changes.lg.updates[1].name).toEqual('ConfirmInput_Prompt_107784');
     expect(changes.lg.updates[1].body).toEqual('- propmpt updated!');
     expect(changes.lu.updates.length).toEqual(1);
     expect(changes.lu.adds.length).toEqual(0);
     expect(changes.lu.deletes.length).toEqual(0);
     expect(changes.lu.updates[0].Name).toEqual('Add');
     expect(changes.lu.updates[0].Body).toEqual('- Add intent updated!');
+  });
+
+  it('add by virtual property', () => {
+    const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const insert1 = [
+      {
+        path: 'triggers[6].actions[0]',
+        value: {
+          $kind: 'Microsoft.SendActivity',
+          $designer: {
+            id: 'Y39scR',
+          },
+          activity: '${SendActivity_Y39scR()}',
+          _virtual_activity: "- You said '${turn.activity.text}'",
+        },
+      },
+    ];
+
+    const vdialog2 = JsonInsert(vdialog1, insert1);
+
+    const changes = DialogResourceChanges(vdialog1, vdialog2);
+    expect(changes.lg.updates.length).toEqual(0);
+    expect(changes.lg.adds.length).toEqual(1);
+    expect(changes.lg.deletes.length).toEqual(0);
+    expect(changes.lg.adds[0].name).toEqual('SendActivity_Y39scR');
+    expect(changes.lg.adds[0].body).toEqual("- You said '${turn.activity.text}'");
+    expect(changes.lu.updates.length).toEqual(0);
+    expect(changes.lu.adds.length).toEqual(0);
+    expect(changes.lu.deletes.length).toEqual(0);
   });
 });

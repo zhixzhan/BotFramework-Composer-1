@@ -34,6 +34,6 @@ export function useVirtualDialog() {
     return result;
   }, {});
 
-  console.log(dialogsMap);
+  // console.log(dialogsMap);
   return dialogsMap;
 }

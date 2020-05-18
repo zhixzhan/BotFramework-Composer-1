@@ -179,7 +179,7 @@
             "id": "107784",
             "name": "Confirmation"
           },
-          "prompt": "${TextInput_Prompt_107784()}",
+          "prompt": "${ConfirmInput_Prompt_107784()}",
           "maxTurnCount": "3",
           "property": "turn.cancelOutcome",
           "value": "=@confirmation",

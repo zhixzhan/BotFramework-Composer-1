@@ -179,13 +179,13 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   const currentDialog = useMemo(() => dialogs.find(d => d.id === dialogId), [dialogs, dialogId]);
 
   const editorData = useMemo(() => {
-    console.log(dialogsMap);
+    // console.log(dialogsMap);
     return source === 'PropertyEditor'
       ? getDialogData(dialogsMap, dialogId, focused || selected || '')
       : getDialogData(dialogsMap, dialogId);
   }, [source, dialogsMap, dialogId, focused, selected]);
 
-  console.log(editorData);
+  // console.log(editorData);
   const data: ShellData = currentDialog
     ? {
         data: editorData,
