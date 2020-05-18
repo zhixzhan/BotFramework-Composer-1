@@ -16,9 +16,7 @@ import {
   dereferenceDefinitions,
 } from '@bfc/shared';
 import formatMessage from 'format-message';
-import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 
-import * as lgUtil from '../../utils/lgUtil';
 import * as luUtil from '../../utils/luUtil';
 import { ActionTypes, FileTypes, BotStatus, Text, AppUpdaterStatus } from '../../constants';
 import { DialogSetting, ReducerFunc } from '../types';
@@ -221,79 +219,12 @@ const updateLuTemplate: ReducerFunc = (state, luFile: LuFile) => {
   return state;
 };
 
-// TODO:(zhixzhan): mark to refactor
-/**
- * content is virtual dialog, or we should implement another updateVirtualDialog
- * {
- *      "designer.id": "HVBVgK",
- *      "activity": "${SendActivity_HVBVgK()}",
- *      "_virtual_activity": "- hellosdfafdsfdsfsdf"
- * }
- *
- * if _vProps is updated, update same id lg/lu
- * if {} is deleted, delete same id lg/lu
- * if {} is added, add same id lg/lu (depends slot a default value or not)
- */
-
-const updateVirtualDialog: ReducerFunc = (state, { id, content, prevContent }) => {
-  const { lgFiles, luFiles, locale } = state;
-  const dialogLgFile = lgFiles.find(f => f.id === `${id}.${locale}`);
-  const dialogLuFile = luFiles.find(f => f.id === `${id}.${locale}`);
-
-  /******** use diff find out current dialog related external resource updates (lg/lu) ************/
-  const changes = DialogResourceChanges(prevContent, content);
-
-  console.log('dialog resourse changes: ', changes);
-
-  /******** update dialog's lg************/
-  if (dialogLgFile) {
-    const lgImportresolver = importResolverGenerator(lgFiles, '.lg', locale);
-    let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
-    newContent = lgUtil.addTemplates(newContent, changes.lg.adds);
-    newContent = lgUtil.updateTemplates(newContent, changes.lg.updates);
-
-    const newFiles = lgFiles.map(f => {
-      if (f.id === dialogLgFile.id) {
-        f.content = newContent;
-        return f;
-      }
-      return f;
-    });
-    state.lgFiles = newFiles.map(f => {
-      const { parse } = lgIndexer;
-      const { id, content } = f;
-      const { templates, diagnostics } = parse(content, id, lgImportresolver);
-
-      return { ...f, templates, diagnostics, content };
-    });
-  }
-  /******** update dialog's lg end ************/
-
-  /******** update dialog's lu ************/
-  if (dialogLuFile) {
-    const newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
-
-    const newFiles = luFiles.map(f => {
-      if (f.id === dialogLuFile.id) {
-        f.content = newContent;
-        return f;
-      }
-      return f;
-    });
-    state.luFiles = newFiles.map(f => {
-      const { parse } = luIndexer;
-      const { id, content } = f;
-      const { intents, diagnostics } = parse(content, id);
-
-      return { ...f, intents, diagnostics, content };
-    });
-  }
-  /******** update dialog's lu end ************/
-
+const updateVirtualDialog: ReducerFunc = (state, { id, content, lgFiles, luFiles }) => {
+  state.lgFiles = lgFiles;
+  state.luFiles = luFiles;
   state.dialogs = state.dialogs.map(dialog => {
     if (dialog.id === id) {
-      const rawDialogContent = DialogConverterReverse(content);
-      return { ...dialog, ...dialogIndexer.parse(dialog.id, rawDialogContent, state.schemas.sdk.content) };
+      return { ...dialog, ...dialogIndexer.parse(dialog.id, content, state.schemas.sdk.content) };
     }
     return dialog;
   });
