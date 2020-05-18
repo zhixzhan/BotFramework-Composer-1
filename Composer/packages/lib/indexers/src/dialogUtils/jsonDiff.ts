@@ -27,6 +27,7 @@ export interface IJSONChangeUpdate {
 // TODO
 /**
  * 1. compare adds <=> deletes, findout `move`
+ * 2. handle key name contains dot 'MicroSoft.Send'
  */
 export interface IJsonChanges {
   adds: IJSONChangeAdd[];
@@ -41,7 +42,7 @@ export const JsonPathStart = '$';
 
 export function jsonPathToObjectPath(path: string) {
   // eslint-disable-next-line security/detect-non-literal-regexp
-  const reg = new RegExp(`^\\${JsonPathStart}\\.`);
+  const reg = new RegExp(`^\\${JsonPathStart}\\.?`);
   return path.replace(reg, '');
 }
 export function getWithJsonPath(value, path) {

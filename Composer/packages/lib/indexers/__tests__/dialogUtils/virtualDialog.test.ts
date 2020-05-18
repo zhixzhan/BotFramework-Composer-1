@@ -4,12 +4,19 @@
 import fs from 'fs';
 
 import get from 'lodash/get';
+import { SDKKinds } from '@bfc/shared';
 
 import { JsonSet, JsonInsert } from '../../src/dialogUtils/jsonDiff';
-import { DialogConverter, DialogConverterReverse, DialogResourceChanges } from '../../src/dialogUtils/virtualDialog';
+import {
+  DialogConverter,
+  DialogConverterReverse,
+  DialogResourceChanges,
+  VirtualSchemaConverter,
+} from '../../src/dialogUtils/virtualDialog';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 
+const schema = JSON.parse(fs.readFileSync(`${__dirname}/data/schemas/sdk.schema`, 'utf-8'));
 const dialogFile = JSON.parse(fs.readFileSync(`${__dirname}/data/todobotwithluissample.dialog`, 'utf-8'));
 const lgFile = lgIndexer.parse(
   fs.readFileSync(`${__dirname}/data/language-generation/en-us/todobotwithluissample.en-us.lg`, 'utf-8')
@@ -25,6 +32,18 @@ const lgFileResolver = () => {
 const luFileResolver = () => {
   return luFile;
 };
+
+describe('Virtual Schema Convert', () => {
+  it('can convert normal schema into virtual schema', () => {
+    const schema1 = VirtualSchemaConverter(schema);
+    expect(get(schema1, ['definitions', SDKKinds.IActivityVirtualTemplate, 'title'])).toEqual(
+      'Microsoft ActivityTemplates'
+    );
+    expect(get(schema1, ['definitions', SDKKinds.Ask, 'properties', '_virtual_activity', '$kind'])).toEqual(
+      SDKKinds.IActivityVirtualTemplate
+    );
+  });
+});
 
 describe('Virtual Dialog Convert', () => {
   it('should convert dialog -> virtual dialog', () => {

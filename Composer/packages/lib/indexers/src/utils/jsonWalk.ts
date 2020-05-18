@@ -31,7 +31,8 @@ export const JsonWalk = (path: string, value: any, visitor: VisitorFunc) => {
     // extract object
   } else if (typeof value === 'object' && value) {
     Object.keys(value).forEach(key => {
-      JsonWalk(`${path}.${key}`, value[key], visitor);
+      const nextPath = key.includes('.') ? `${path}[${key}]` : `${path}.${key}`;
+      JsonWalk(nextPath, value[key], visitor);
     });
   }
 };

@@ -3,6 +3,7 @@
 
 import has from 'lodash/has';
 import get from 'lodash/get';
+import set from 'lodash/set';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   extractLgTemplateRefs,
@@ -23,7 +24,7 @@ import { ExtractLgTemplates, ExtractLuIntents } from './extractResources';
 export const VPropsPrefix = '_virtual_';
 
 export const LGTemplateFields = ['prompt', 'unrecognizedPrompt', 'invalidPrompt', 'defaultValueResponse', 'activity']; // fields may contains lg
-export const LUIntentFields = ['intent']; // fields aby contains lu
+export const LUIntentFields = ['intent']; // fields aby contains lu, TODO: more fields
 
 const VirtualLGFields = LGTemplateFields.map(f => `${VPropsPrefix}${f}`);
 const VirtualLUFields = LUIntentFields.map(f => `${VPropsPrefix}${f}`);
@@ -301,4 +302,61 @@ export function DialogConverterReverse(dialog: {
   JsonWalk('$', deDialog, visitor);
 
   return deDialog;
+}
+
+const IActivityVirtualTemplate = {
+  title: 'Microsoft ActivityTemplates',
+  description:
+    'Components which are ActivityTemplate, which is string template, an activity, or a implementation of ActivityTemplate',
+  $role: 'interface',
+  oneOf: [
+    {
+      type: 'string',
+    },
+  ],
+};
+
+export function VirtualSchemaConverter(schema: {
+  [key: string]: any;
+}): {
+  [key: string]: any;
+} {
+  const deSchema = cloneDeep(schema);
+  deSchema.definitions[SDKKinds.IActivityVirtualTemplate] = IActivityVirtualTemplate;
+  /**
+   *
+   * @param path , jsonPath string
+   * @param value , current node value    *
+   * @return boolean, true to stop walk    */
+  const visitor: VisitorFunc = (_path: string, value: any): boolean => {
+    // extend sdk schema properties with virtual properties
+    const properties = get(value, 'properties');
+    if (properties && typeof properties === 'object') {
+      const vProperties: any = [];
+
+      for (const [propName, propValue] of Object.entries(properties)) {
+        if (typeof propValue !== 'object') continue;
+
+        if (LGTemplateFields.includes(propName)) {
+          const vPropName = `${VPropsPrefix}${propName}`;
+          const vPropValue = {
+            ...propValue,
+            $kind: SDKKinds.IActivityVirtualTemplate,
+            $ref: `#/definitions/${SDKKinds.IActivityVirtualTemplate}`,
+          };
+          vProperties.push({ vPropName, vPropValue });
+        }
+      }
+
+      for (const { vPropName, vPropValue } of vProperties) {
+        set(properties, vPropName, vPropValue);
+      }
+
+      set(value, 'properties', properties);
+    }
+    return false;
+  };
+  JsonWalk('$', deSchema, visitor);
+
+  return deSchema;
 }
