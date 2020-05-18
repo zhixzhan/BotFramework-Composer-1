@@ -107,4 +107,39 @@ describe('Virtual Dialog Resources', () => {
     expect(changes.lu.adds.length).toEqual(0);
     expect(changes.lu.deletes.length).toEqual(0);
   });
+
+  it('add an intent', () => {
+    const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const insert1 = [
+      {
+        path: 'triggers[7]',
+        value: {
+          $kind: 'Microsoft.OnIntent',
+          $designer: {
+            id: '6L3t6X',
+          },
+          intent: 'hello',
+          actions: [
+            {
+              $kind: 'Microsoft.SendActivity',
+              $designer: {
+                id: 'kbvD42',
+              },
+              activity: '${SendActivity_kbvD42()}',
+            },
+          ],
+        },
+      },
+    ];
+
+    const vdialog2 = JsonInsert(vdialog1, insert1);
+
+    const changes = DialogResourceChanges(vdialog1, vdialog2);
+    expect(changes.lg.updates.length).toEqual(0);
+    expect(changes.lg.adds.length).toEqual(0);
+    expect(changes.lg.deletes.length).toEqual(0);
+    expect(changes.lu.updates.length).toEqual(0);
+    expect(changes.lu.adds.length).toEqual(0);
+    expect(changes.lu.deletes.length).toEqual(0);
+  });
 });

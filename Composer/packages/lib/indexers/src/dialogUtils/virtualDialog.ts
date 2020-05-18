@@ -162,17 +162,19 @@ export function DialogResourceChanges(
     Object.keys(dialogItem).forEach(propName => {
       const propValue = dialogItem[propName];
       const vPropValue = getVPropsByField(dialogItem, propName);
-      if (LGTemplateFields.includes(propName)) {
-        const lgType = new LgType(kind, '').toString();
-        const lgName = new LgMetaData(lgType, designerId || '').toString();
-        const lgBody = vPropValue;
-        const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
-        addTemplates.push(lgTemplate);
-      } else if (LUIntentFields.includes(propName)) {
-        const luName = propValue;
-        const luBody = vPropValue;
-        const luIntent: LuIntentSection = { Name: luName, Body: luBody };
-        addIntents.push(luIntent);
+      if (vPropValue) {
+        if (LGTemplateFields.includes(propName)) {
+          const lgType = new LgType(kind, '').toString();
+          const lgName = new LgMetaData(lgType, designerId || '').toString();
+          const lgBody = vPropValue;
+          const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
+          addTemplates.push(lgTemplate);
+        } else if (LUIntentFields.includes(propName)) {
+          const luName = propValue;
+          const luBody = vPropValue;
+          const luIntent: LuIntentSection = { Name: luName, Body: luBody };
+          addIntents.push(luIntent);
+        }
       }
     });
   }
@@ -222,7 +224,7 @@ export function DialogConverter(
         LGTemplateFields.forEach(field => {
           if (has(value, field)) {
             const propValue = value[field];
-            let vPropValue = propValue;
+            let vPropValue = '';
             let lgName = '';
             const lgTemplateRef = extractLgTemplateRefs(propValue);
 
