@@ -50,7 +50,6 @@ export enum SDKKinds {
   HashtagEntityRecognizer = 'Microsoft.HashtagEntityRecognizer',
   HttpRequest = 'Microsoft.HttpRequest',
   IActivityTemplate = 'Microsoft.IActivityTemplate',
-  IActivityVirtualTemplate = 'Microsoft.IActivityVirtualTemplate',
   IDialog = 'Microsoft.IDialog',
   IEntityRecognizer = 'Microsoft.IEntityRecognizer',
   ILanguageGenerator = 'Microsoft.ILanguageGenerator',

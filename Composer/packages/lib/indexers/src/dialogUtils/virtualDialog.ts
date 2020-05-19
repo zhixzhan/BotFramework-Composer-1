@@ -3,7 +3,6 @@
 
 import has from 'lodash/has';
 import get from 'lodash/get';
-import set from 'lodash/set';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   extractLgTemplateRefs,
@@ -19,25 +18,46 @@ import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
 import { getBaseName } from '../utils/help';
 
 import { DialogDiff } from './dialogDiff';
-import { ExtractLgTemplates, ExtractLuIntents } from './extractResources';
 
 export const VPropsPrefix = '_virtual_';
 
 export const LGTemplateFields = ['prompt', 'unrecognizedPrompt', 'invalidPrompt', 'defaultValueResponse', 'activity']; // fields may contains lg
 export const LUIntentFields = ['intent']; // fields aby contains lu, TODO: more fields
 
-const VirtualLGFields = LGTemplateFields.map(f => `${VPropsPrefix}${f}`);
-const VirtualLUFields = LUIntentFields.map(f => `${VPropsPrefix}${f}`);
-
 export const getVPropsByField = (data, field) => {
   const virtualField = `${VPropsPrefix}${field}`;
   return data[virtualField];
 };
 
-export const setVPropsByField = (data, field, fieldValue) => {
+/**
+ *
+ * @param data
+ * @param field
+ * @param vPropValue
+ *
+ * {
+ *   activity: '${SendActivity_12345}'
+ * }
+ *  swap prop value =>
+ *
+ * {
+ *   activity: '- hello'
+ *   _virtual_activity: '${SendActivity_12345}'
+ * }
+ *
+ */
+export const setVPropsByField = (data, field, vPropValue) => {
+  const propValue = data[field];
   const virtualField = `${VPropsPrefix}${field}`;
-  data[virtualField] = fieldValue;
-  return data;
+  data[virtualField] = propValue;
+  data[field] = vPropValue;
+};
+
+export const unsetVPropsByField = (data, field) => {
+  const virtualField = `${VPropsPrefix}${field}`;
+  const vPropValue = data[virtualField];
+  delete data[virtualField];
+  data[field] = vPropValue;
 };
 
 const getFeildLgRefName = (data, field): string => {
@@ -74,19 +94,19 @@ const serilizeLgRefByDesignerId = value => {
  * {
  *   $designer: {id: "003038"}
  *   $kind: "Microsoft.SendActivity"
- *   activity: "${SendActivity_003038()}"
- *   _virtual_activity: "- hi"
+ *   activity: "- hi ${sdfsdf} ${sfsdf_123145}"
+//  *   _virtual_activity: "${SendActivity_003038()}"
  * }
  *
  * @param dialog2
  * {
  *   $designer: {id: "003038"}
  *   $kind: "Microsoft.SendActivity"
- *   activity: "${SendActivity_003038()}"
- *   _virtual_activity: "- hi, updated!"
+ *   activity: "- hi, updated!"
+ *   _virtual_activity: "${SendActivity_003038()}"
  * }
  *
- * => update lg: [{ SendActivity_003038: "- hi, updated!" }]
+ * => lg.updates: [{ SendActivity_003038: "- hi, updated!" }]
  */
 
 export function DialogResourceChanges(
@@ -108,71 +128,66 @@ export function DialogResourceChanges(
   const { adds, deletes, updates } = diffs;
   const deleteTemplateNames: string[] = []; // lg need to delete
   const deleteLuIntentNames: string[] = []; // lu need to delete
-
   const addTemplates: LgTemplate[] = []; // lg need to add
   const addIntents: LuIntentSection[] = []; // lu need to add
-
   const updateTemplates: LgTemplate[] = []; // lg need to update
   const updateIntents: LuIntentSection[] = []; // lu need to update
 
   for (const item of updates) {
     const patharr = item.path.split('.');
     patharr.shift();
-    const vPropName = patharr.pop() || '';
+    const propName = patharr.pop() || '';
     const nodePath = patharr.join('.');
-    // eslint-disable-next-line security/detect-non-literal-regexp
-    const propName = vPropName.replace(new RegExp(`^${VPropsPrefix}`), '');
-    const propValue = get(dialog2, `${nodePath}.${propName}`);
-    const vPropValue = item.value;
+    const propValue = item.value;
+    const vPropName = `${VPropsPrefix}${propName}`;
+    const vPropValue = get(dialog2, `${nodePath}.${vPropName}`);
+    const dialogItem = get(dialog2, nodePath);
 
-    if (VirtualLGFields.includes(vPropName)) {
-      const lgTemplateRef = extractLgTemplateRefs(propValue);
-      let lgName = '';
-      if (lgTemplateRef.length === 0) {
-        const dialogItem = get(dialog2, nodePath);
-        lgName = getFeildLgRefName(dialogItem, propName);
-      }
-
-      // length 0 means activity is initial value, havent slot with ${SendActivity_12355},
-      if (lgTemplateRef.length === 1) {
-        lgName = lgTemplateRef[0].name;
-      }
-
-      const lgBody = vPropValue;
+    if (LGTemplateFields.includes(propName)) {
+      const lgName = getFeildLgRefName(dialogItem, propName); // or extract from vPropValue
+      const lgBody = propValue;
       const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
       updateTemplates.push(lgTemplate);
-    } else if (VirtualLUFields.includes(vPropName)) {
-      const luName = propValue;
-      const luBody = vPropValue;
+    } else if (LUIntentFields.includes(propName)) {
+      const luName = vPropValue;
+      const luBody = propValue;
       const luIntent: LuIntentSection = { Name: luName, Body: luBody };
       updateIntents.push(luIntent);
     }
   }
 
   for (const item of deletes) {
-    deleteTemplateNames.push(...ExtractLgTemplates('', item.value).map(({ name }) => name)); // if delete dialog node, delete lg template it contains
-    deleteLuIntentNames.push(...ExtractLuIntents('', item.value).map(({ name }) => name)); // if delete dialog node, delete lu intent it contains
+    const dialogItem = item.value;
+    Object.keys(dialogItem).forEach(propName => {
+      if (LGTemplateFields.includes(propName)) {
+        const lgName = getFeildLgRefName(dialogItem, propName); // or extract from vPropValue
+        deleteTemplateNames.push(lgName);
+      } else if (LUIntentFields.includes(propName)) {
+        const luName = getVPropsByField(dialogItem, propName);
+        deleteLuIntentNames.push(luName);
+      }
+    });
   }
 
   // create lg template if added dialog node needs
   for (const item of adds) {
     const dialogItem = item.value;
-    const kind = item.value.$kind;
-    const designerId = get(item.value, '$designer.id');
 
     Object.keys(dialogItem).forEach(propName => {
       const propValue = dialogItem[propName];
       const vPropValue = getVPropsByField(dialogItem, propName);
-      if (vPropValue) {
+      if (propValue && vPropValue) {
         if (LGTemplateFields.includes(propName)) {
+          const kind = item.value.$kind;
+          const designerId = get(item.value, '$designer.id');
           const lgType = new LgType(kind, '').toString();
           const lgName = new LgMetaData(lgType, designerId || '').toString();
-          const lgBody = vPropValue;
+          const lgBody = propValue;
           const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
           addTemplates.push(lgTemplate);
         } else if (LUIntentFields.includes(propName)) {
-          const luName = propValue;
-          const luBody = vPropValue;
+          const luName = vPropValue;
+          const luBody = propValue;
           const luIntent: LuIntentSection = { Name: luName, Body: luBody };
           addIntents.push(luIntent);
         }
@@ -291,8 +306,8 @@ export function DialogConverterReverse(dialog: {
 
     if (typeof value === 'object' && !Array.isArray(value)) {
       Object.keys(value).forEach(key => {
-        if (key.startsWith(VPropsPrefix)) {
-          delete value[key];
+        if ([...LGTemplateFields, ...LUIntentFields].includes(key)) {
+          unsetVPropsByField(value, key);
         }
       });
       serilizeLgRefByDesignerId(value);
@@ -302,61 +317,4 @@ export function DialogConverterReverse(dialog: {
   JsonWalk('$', deDialog, visitor);
 
   return deDialog;
-}
-
-const IActivityVirtualTemplate = {
-  title: 'Microsoft ActivityTemplates',
-  description:
-    'Components which are ActivityTemplate, which is string template, an activity, or a implementation of ActivityTemplate',
-  $role: 'interface',
-  oneOf: [
-    {
-      type: 'string',
-    },
-  ],
-};
-
-export function VirtualSchemaConverter(schema: {
-  [key: string]: any;
-}): {
-  [key: string]: any;
-} {
-  const deSchema = cloneDeep(schema);
-  deSchema.definitions[SDKKinds.IActivityVirtualTemplate] = IActivityVirtualTemplate;
-  /**
-   *
-   * @param path , jsonPath string
-   * @param value , current node value    *
-   * @return boolean, true to stop walk    */
-  const visitor: VisitorFunc = (_path: string, value: any): boolean => {
-    // extend sdk schema properties with virtual properties
-    const properties = get(value, 'properties');
-    if (properties && typeof properties === 'object') {
-      const vProperties: any = [];
-
-      for (const [propName, propValue] of Object.entries(properties)) {
-        if (typeof propValue !== 'object') continue;
-
-        if (LGTemplateFields.includes(propName)) {
-          const vPropName = `${VPropsPrefix}${propName}`;
-          const vPropValue = {
-            ...propValue,
-            $kind: SDKKinds.IActivityVirtualTemplate,
-            $ref: `#/definitions/${SDKKinds.IActivityVirtualTemplate}`,
-          };
-          vProperties.push({ vPropName, vPropValue });
-        }
-      }
-
-      for (const { vPropName, vPropValue } of vProperties) {
-        set(properties, vPropName, vPropValue);
-      }
-
-      set(value, 'properties', properties);
-    }
-    return false;
-  };
-  JsonWalk('$', deSchema, visitor);
-
-  return deSchema;
 }

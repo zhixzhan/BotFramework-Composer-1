@@ -283,8 +283,7 @@ const DefaultUISchema: UISchema = {
 
     subtitle: () => formatMessage('Send Activity'),
     helpLink: 'https://aka.ms/bfc-send-activity',
-    order: ['_virtual_activity', '*'],
-    hidden: ['activity'],
+    order: ['activity', '*'],
   },
   [SDKKinds.SetProperty]: {
     label: () => formatMessage('Set a property'),

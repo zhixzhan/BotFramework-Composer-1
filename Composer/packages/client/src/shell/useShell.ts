@@ -15,7 +15,7 @@ import { isAbsHosted } from '../utils/envUtil';
 
 import { useLgApi } from './lgApi';
 import { useLuApi } from './luApi';
-import { useVirtualDialog, useVirtualSchema } from './useVirtualDialog';
+import { useVirtualDialog } from './useVirtualDialog';
 
 const FORM_EDITOR = 'PropertyEditor';
 
@@ -45,7 +45,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
 
   const { dialogId, selected, focused, promptTab } = designPageLocation;
   const dialogsMap = useVirtualDialog();
-  const vSchemas = useVirtualSchema();
+  // const vSchemas = useVirtualSchema();
 
   async function updateRegExIntentHandler(id, intentName, pattern) {
     const dialog = dialogs.find(dialog => dialog.id === id);
@@ -186,7 +186,6 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
       : getDialogData(dialogsMap, dialogId);
   }, [source, dialogsMap, dialogId, focused, selected]);
 
-  // console.log(editorData);
   const data: ShellData = currentDialog
     ? {
         data: editorData,
@@ -196,7 +195,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
         dialogs,
         dialogId,
         focusPath,
-        schemas: vSchemas,
+        schemas,
         lgFiles,
         luFiles,
         currentDialog,
