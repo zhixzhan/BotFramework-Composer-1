@@ -225,7 +225,7 @@ export function DialogConverter(
         LGTemplateFields.forEach(field => {
           if (has(value, field)) {
             const propValue = value[field];
-            let vPropValue = '';
+            let vPropValue = '- ';
             let lgName = '';
             const lgTemplateRef = extractLgTemplateRefs(propValue);
 
