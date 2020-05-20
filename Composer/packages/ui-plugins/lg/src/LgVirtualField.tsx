@@ -47,11 +47,7 @@ const LgVirtualField: React.FC<FieldProps<string>> = props => {
   const lgFileId = `${currentDialog.lgFile}.${locale}`;
   const lgFile = lgFiles && lgFiles.find(file => file.id === lgFileId);
 
-  const template = lgFile?.templates.find(template => {
-    return template.name === lgName;
-  });
-
-  const diagnostics = lgFile && template ? filterTemplateDiagnostics(lgFile.diagnostics, template) : [];
+  const diagnostics = lgFile ? filterTemplateDiagnostics(lgFile, lgName) : [];
 
   const lgOption = {
     projectId,

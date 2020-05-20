@@ -230,7 +230,7 @@ export class LGServer {
       const id = fileId || uri;
       const { allTemplates, diagnostics } = Templates.parseText(content, id, importResolver);
 
-      return { templates: allTemplates, diagnostics };
+      return { id, content, templates: allTemplates, diagnostics };
     };
     const lgDocument: LGDocument = {
       uri,
@@ -776,8 +776,6 @@ export class LGServer {
       return;
     }
 
-    const { templates, diagnostics } = lgFile;
-
     // if inline editor, concat new content for validate
     if (fileId && templateId) {
       const templateDiags = checkTemplate({
@@ -791,11 +789,9 @@ export class LGServer {
         this.sendDiagnostics(document, lspDiagnostics);
         return;
       }
-      const template = templates.find(({ name }) => name === templateId);
-      if (!template) return;
 
       // filter diagnostics belong to this template.
-      const lgDiagnostics = filterTemplateDiagnostics(diagnostics, template);
+      const lgDiagnostics = filterTemplateDiagnostics(lgFile, templateId);
       const lspDiagnostics = convertDiagnostics(lgDiagnostics, document, 1);
       this.sendDiagnostics(document, lspDiagnostics);
       return;

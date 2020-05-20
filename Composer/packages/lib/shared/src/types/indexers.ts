@@ -95,11 +95,6 @@ export interface LgTemplate {
   range?: CodeRange;
 }
 
-export interface LgParsed {
-  diagnostics: Diagnostic[];
-  templates: LgTemplate[];
-}
-
 export interface LgFile {
   id: string;
   content: string;
