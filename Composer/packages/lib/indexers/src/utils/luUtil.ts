@@ -174,6 +174,13 @@ export function addIntent(content: string, { Name, Body, Entities }: LuIntentSec
   // If the invoker doesn't want to carry Entities, don't pass Entities in.
   return updateIntent(content, intentName, { Name, Body, Entities });
 }
+export function addIntents(content: string, intents: LuIntentSection[]): string {
+  let newContent = content;
+  intents.forEach(intent => {
+    newContent = updateIntent(newContent, intent.Name, intent);
+  });
+  return newContent;
+}
 
 /**
  *

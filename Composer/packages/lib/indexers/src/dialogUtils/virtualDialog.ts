@@ -12,6 +12,8 @@ import {
   LgMetaData,
   LuIntentSection,
   LgTemplateRef,
+  LuType,
+  LuMetaData,
 } from '@bfc/shared';
 
 import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
@@ -20,6 +22,8 @@ import { getBaseName } from '../utils/help';
 import { DialogDiff } from './dialogDiff';
 
 export const VPropsPrefix = '_virtual_';
+export const VLUPropName = '_virtual_luis_name';
+export const VLUPropBody = '_virtual_luis_body';
 
 export const LGTemplateFields = ['prompt', 'unrecognizedPrompt', 'invalidPrompt', 'defaultValueResponse', 'activity']; // fields may contains lg
 export const LUIntentFields = ['intent']; // fields aby contains lu, TODO: more fields
@@ -66,6 +70,19 @@ const getFeildLgRefName = (data, field): string => {
   if (!$kind || !designerId) return '';
   const lgType = new LgType($kind, field).toString();
   return new LgMetaData(lgType, designerId).toString();
+};
+
+const getContainsLuName = (data): string | undefined => {
+  const $kind = data?.$kind;
+  const designerId = get(data, '$designer.id');
+  if (!$kind || !designerId) return;
+
+  if ($kind === SDKKinds.OnIntent) {
+    return data.intent;
+  } else if ($kind === SDKKinds.TextInput) {
+    const relatedLuIntentType = new LuType($kind).toString();
+    return new LuMetaData(relatedLuIntentType, designerId).toString();
+  }
 };
 
 const serilizeLgRefByDesignerId = value => {
@@ -139,8 +156,8 @@ export function DialogResourceChanges(
     const propName = patharr.pop() || '';
     const nodePath = patharr.join('.');
     const propValue = item.value;
-    const vPropName = `${VPropsPrefix}${propName}`;
-    const vPropValue = get(dialog2, `${nodePath}.${vPropName}`);
+    // const vPropName = `${VPropsPrefix}${propName}`;
+    // const vPropValue = get(dialog2, `${nodePath}.${vPropName}`);
     const dialogItem = get(dialog2, nodePath);
 
     if (LGTemplateFields.includes(propName)) {
@@ -148,12 +165,14 @@ export function DialogResourceChanges(
       const lgBody = propValue;
       const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
       updateTemplates.push(lgTemplate);
-    } else if (LUIntentFields.includes(propName)) {
-      const luName = vPropValue;
-      const luBody = propValue;
-      const luIntent: LuIntentSection = { Name: luName, Body: luBody };
-      updateIntents.push(luIntent);
     }
+    // TODO: acctually current not handle lu update
+    // else if (LUIntentFields.includes(propName)) {
+    //   const luName = dialogItem[VLUPropName];
+    //   const luBody = propValue;
+    //   const luIntent: LuIntentSection = { Name: luName, Body: luBody };
+    //   updateIntents.push(luIntent);
+    // }
   }
 
   for (const item of deletes) {
@@ -162,11 +181,13 @@ export function DialogResourceChanges(
       if (LGTemplateFields.includes(propName)) {
         const lgName = getFeildLgRefName(dialogItem, propName); // or extract from vPropValue
         deleteTemplateNames.push(lgName);
-      } else if (LUIntentFields.includes(propName)) {
-        const luName = getVPropsByField(dialogItem, propName);
-        deleteLuIntentNames.push(luName);
       }
     });
+
+    const luName = getContainsLuName(dialogItem);
+    if (luName) {
+      deleteLuIntentNames.push(luName);
+    }
   }
 
   // create lg template if added dialog node needs
@@ -175,24 +196,25 @@ export function DialogResourceChanges(
 
     Object.keys(dialogItem).forEach(propName => {
       const propValue = dialogItem[propName];
-      const vPropValue = getVPropsByField(dialogItem, propName);
-      if (propValue && vPropValue) {
+      if (propValue) {
         if (LGTemplateFields.includes(propName)) {
-          const kind = item.value.$kind;
-          const designerId = get(item.value, '$designer.id');
-          const lgType = new LgType(kind, '').toString();
+          const kind = dialogItem.$kind;
+          const designerId = get(dialogItem, '$designer.id');
+          const lgType = new LgType(kind, propName).toString();
           const lgName = new LgMetaData(lgType, designerId || '').toString();
           const lgBody = propValue;
           const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
           addTemplates.push(lgTemplate);
-        } else if (LUIntentFields.includes(propName)) {
-          const luName = vPropValue;
-          const luBody = propValue;
-          const luIntent: LuIntentSection = { Name: luName, Body: luBody };
-          addIntents.push(luIntent);
         }
       }
     });
+
+    const luName = getContainsLuName(dialogItem);
+    if (luName) {
+      const luBody = dialogItem[VLUPropBody];
+      const luIntent: LuIntentSection = { Name: luName, Body: luBody };
+      addIntents.push(luIntent);
+    }
   }
 
   return {
@@ -265,15 +287,10 @@ export function DialogConverter(
       }
 
       if (luFile) {
-        // find lu
-        if (value.$kind === SDKKinds.OnIntent) {
-          const field = 'intent';
-          const intentName = value[field];
-          const intent = luFile ? luFile.intents.find(t => t.Name === intentName) : undefined; // else find in trigger
-          if (intent) {
-            setVPropsByField(value, field, intent.Body);
-          }
-        }
+        const luName = getContainsLuName(value);
+        const luBody = luFile && luName && luFile.intents.find(t => t.Name === luName)?.Body; // else find in trigger
+        value[VLUPropName] = luName;
+        value[VLUPropBody] = luBody;
       }
     }
     return false;
@@ -306,8 +323,10 @@ export function DialogConverterReverse(dialog: {
 
     if (typeof value === 'object' && !Array.isArray(value)) {
       Object.keys(value).forEach(key => {
-        if ([...LGTemplateFields, ...LUIntentFields].includes(key)) {
+        if (LGTemplateFields.includes(key)) {
           unsetVPropsByField(value, key);
+        } else if ([VLUPropName, VLUPropBody].includes(key)) {
+          delete value[key];
         }
       });
       serilizeLgRefByDesignerId(value);

@@ -38,8 +38,9 @@ describe('Virtual Dialog Convert', () => {
     expect(get(convertedDialog, 'triggers[6].actions[0]._virtual_prompt')).toEqual('${ConfirmInput_Prompt_107784()}');
     expect(get(convertedDialog, 'triggers[6].actions[0].prompt')).toContain('- Are you sure you want to cancel?');
 
-    expect(get(convertedDialog, 'triggers[1]._virtual_intent')).toEqual('Add');
-    expect(get(convertedDialog, 'triggers[1].intent')).toContain('- Add todo');
+    expect(get(convertedDialog, 'triggers[1].intent')).toEqual('Add');
+    expect(get(convertedDialog, 'triggers[1]._virtual_luis_name')).toEqual('Add');
+    expect(get(convertedDialog, 'triggers[1]._virtual_luis_body')).toContain('- Add todo');
   });
 
   it('should convert virtual dialog -> dialog', () => {
@@ -55,7 +56,6 @@ describe('Virtual Dialog Resources', () => {
     const insert1 = [
       { path: 'triggers[0].actions[0].actions[0].actions[0].activity', value: '- updated!' },
       { path: 'triggers[6].actions[0].prompt', value: '- propmpt updated!' },
-      { path: 'triggers[1].intent', value: '- Add intent updated!' },
     ];
 
     const vdialog2 = JsonSet(vdialog1, insert1);
@@ -68,11 +68,9 @@ describe('Virtual Dialog Resources', () => {
     expect(changes.lg.updates[0].body).toEqual('- updated!');
     expect(changes.lg.updates[1].name).toEqual('ConfirmInput_Prompt_107784');
     expect(changes.lg.updates[1].body).toEqual('- propmpt updated!');
-    expect(changes.lu.updates.length).toEqual(1);
+    expect(changes.lu.updates.length).toEqual(0);
     expect(changes.lu.adds.length).toEqual(0);
     expect(changes.lu.deletes.length).toEqual(0);
-    expect(changes.lu.updates[0].Name).toEqual('Add');
-    expect(changes.lu.updates[0].Body).toEqual('- Add intent updated!');
   });
 
   it('add by virtual property', () => {
@@ -135,7 +133,46 @@ describe('Virtual Dialog Resources', () => {
     expect(changes.lg.adds.length).toEqual(0);
     expect(changes.lg.deletes.length).toEqual(0);
     expect(changes.lu.updates.length).toEqual(0);
-    expect(changes.lu.adds.length).toEqual(0);
+    expect(changes.lu.adds.length).toEqual(1);
+    expect(changes.lu.deletes.length).toEqual(0);
+  });
+
+  it('copy a TextInput', () => {
+    const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const insert1 = [
+      {
+        path: 'triggers[6].actions[0]',
+        value: {
+          $kind: 'Microsoft.TextInput',
+          $designer: {
+            id: '96TcCU',
+          },
+          allowInterruptions: false,
+          alwaysPrompt: false,
+          defaultValueResponse: '- 6',
+          disabled: false,
+          invalidPrompt: '- 5',
+          maxTurnCount: 3,
+          prompt: '- 1',
+          unrecognizedPrompt: '- 4',
+          _virtual_luis_body: '-23',
+          _virtual_luis_name: 'TextInput_Response_96TcCU', // may no need
+        },
+      },
+    ];
+
+    const vdialog2 = JsonInsert(vdialog1, insert1);
+
+    const changes = DialogResourceChanges(vdialog1, vdialog2);
+    expect(changes.lg.updates.length).toEqual(0);
+    expect(changes.lg.adds.length).toEqual(4);
+    expect(changes.lg.deletes.length).toEqual(0);
+    expect(changes.lg.adds[0].name).toEqual('TextInput_DefaultValueResponse_96TcCU');
+    expect(changes.lg.adds[0].body).toEqual('- 6');
+    expect(changes.lu.updates.length).toEqual(0);
+    expect(changes.lu.adds.length).toEqual(1);
+    expect(changes.lu.adds[0].Name).toEqual('TextInput_Response_96TcCU');
+    expect(changes.lu.adds[0].Body).toEqual('-23');
     expect(changes.lu.deletes.length).toEqual(0);
   });
 });

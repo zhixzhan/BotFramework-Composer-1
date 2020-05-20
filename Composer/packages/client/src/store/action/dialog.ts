@@ -76,12 +76,6 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
 };
 
 /**
- * {
- *      "designer.id": "HVBVgK",
- *      "activity": "${SendActivity_HVBVgK()}",
- *      "_virtual_activity": "- hellos"
- * }
- *
  * if _vProps is updated, update same id lg/lu
  * if {} is deleted, delete same id lg/lu
  * if {} is added, add same id lg/lu (depends slot a default value or not)
@@ -114,7 +108,8 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
   }
 
   if (dialogLuFile) {
-    const newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
+    let newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
+    newContent = luUtil.addIntents(dialogLuFile.content, changes.lu.adds);
     if (newContent === dialogLuFile.content) {
       newLuFiles = luFiles;
     } else {
