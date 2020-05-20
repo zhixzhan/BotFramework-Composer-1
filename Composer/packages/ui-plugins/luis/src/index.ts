@@ -4,14 +4,14 @@
 import { PluginConfig } from '@bfc/extension';
 import { SDKKinds } from '@bfc/shared';
 
-import { LuisIntentVirtualEditor } from './LuisIntentVirtualEditor';
+import { LuisIntentEditor } from './LuisIntentEditor';
 
 const config: PluginConfig = {
   recognizers: [
     {
       id: SDKKinds.LuisRecognizer,
       displayName: 'LUIS',
-      editor: LuisIntentVirtualEditor,
+      editor: LuisIntentEditor,
       isSelected: data => {
         return typeof data === 'string' && data.endsWith('.lu');
       },

@@ -7,51 +7,50 @@ import React from 'react';
 import { LuEditor, inlineModePlaceholder } from '@bfc/code-editor';
 import { FieldProps, useShellApi } from '@bfc/extension';
 import { filterSectionDiagnostics } from '@bfc/indexers';
-import { LuIntentSection, CodeEditorSettings, LuMetaData, LuType } from '@bfc/shared';
+import { VLUPropName, VLUPropBody } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
+import { CodeEditorSettings } from '@bfc/shared';
 
 const LuisIntentEditor: React.FC<FieldProps<string>> = props => {
-  const { onChange, value, schema, placeholder } = props;
-  const { currentDialog, designerId, luFiles, shellApi, locale, projectId, userSettings } = useShellApi();
+  const { onChange, placeholder } = props;
+  const { currentDialog, luFiles, shellApi, locale, projectId, userSettings, data } = useShellApi();
   const luFile = luFiles.find(f => f.id === `${currentDialog.id}.${locale}`);
 
-  let intentName = value;
-  if (typeof intentName === 'object') {
-    const { $kind }: any = schema?.properties || {};
-    $kind.const && (intentName = new LuMetaData(new LuType($kind.const).toString(), designerId).toString());
-  }
+  console.log(data);
 
-  const luIntent =
-    (luFile && luFile.intents.find(intent => intent.Name === intentName)) ||
-    ({
-      Name: intentName,
-      Body: '',
-    } as LuIntentSection);
+  /**
+   * if props.value is string, it means luName, used by `Trigger phrases` input
+   * if props.value is object, it means current dialog item, used by `TextInput`
+   *
+   * Both scearios, data from useShellApi are same, so here ignore props.value
+   */
+  const luName = data[VLUPropName];
+  const luBody = data[VLUPropBody];
 
-  if (!luFile || !intentName) {
+  if (!luFile) {
     return null;
   }
 
   const commitChanges = newValue => {
-    if (!intentName) {
+    if (!luName) {
       return;
     }
 
-    const newIntent = { Name: intentName, Body: newValue };
-    shellApi.updateLuIntent(luFile.id, intentName, newIntent);
-    onChange(intentName);
+    const newIntent = { Name: luName, Body: newValue };
+    shellApi.updateLuIntent(luFile.id, luName, newIntent);
+    onChange(luName);
   };
 
   const handleSettingsChange = (settings: Partial<CodeEditorSettings>) => {
     shellApi.updateUserSettings({ codeEditor: settings });
   };
 
-  const diagnostics = luFile ? filterSectionDiagnostics(luFile, luIntent.Name) : [];
+  const diagnostics = luFile ? filterSectionDiagnostics(luFile, luName) : [];
 
   return (
     <LuEditor
       height={225}
-      luOption={{ fileId: luFile.id, sectionId: luIntent.Name, projectId }}
-      value={luIntent.Body}
+      luOption={{ fileId: luFile.id, sectionId: luName, projectId }}
+      value={luBody}
       onChange={commitChanges}
       diagnostics={diagnostics}
       editorSettings={userSettings.codeEditor}

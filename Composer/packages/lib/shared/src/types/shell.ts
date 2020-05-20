@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { DialogInfo, LuFile, LgFile, LuIntentSection, LgTemplate } from './indexers';
+import { DialogInfo, LuFile, LgFile, LuIntentSection } from './indexers';
 import { UserSettings } from './settings';
 import { OBISchema } from './schema';
 
@@ -59,17 +59,7 @@ export interface ShellApi {
   onFocusSteps: (stepIds: string[], focusedTab?: string) => void;
   onFocusEvent: (eventId: string) => void;
   onSelect: (ids: string[]) => void;
-  getLgTemplates: (id: string) => LgTemplate[];
-  copyLgTemplate: (id: string, fromTemplateName: string, toTemplateName?: string) => Promise<void>;
-  addLgTemplate: (id: string, templateName: string, templateStr: string) => Promise<void>;
-  updateLgTemplate: (id: string, templateName: string, templateStr: string) => Promise<void>;
-  removeLgTemplate: (id: string, templateName: string) => Promise<void>;
-  removeLgTemplates: (id: string, templateNames: string[]) => Promise<void>;
-  getLuIntent: (id: string, intentName: string) => LuIntentSection | undefined;
-  getLuIntents: (id: string) => LuIntentSection[];
-  addLuIntent: (id: string, intentName: string, intent: LuIntentSection) => Promise<void>;
   updateLuIntent: (id: string, intentName: string, intent: LuIntentSection) => Promise<void>;
-  removeLuIntent: (id: string, intentName: string) => void;
   updateRegExIntent: (id: string, intentName: string, pattern: string) => void;
   createDialog: (actions: any) => Promise<string | null>;
   addCoachMarkRef: (ref: { [key: string]: any }) => void;

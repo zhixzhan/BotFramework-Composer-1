@@ -3,7 +3,7 @@
 
 /** @jsx jsx */
 import { jsx } from '@emotion/core';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { LgEditor } from '@bfc/code-editor';
 import { FieldProps, useShellApi } from '@bfc/extension';
 import { FieldLabel } from '@bfc/adaptive-form';
@@ -33,8 +33,9 @@ const getInitialTemplate = (fieldName: string, formData?: string): string => {
 };
 
 const LgField: React.FC<FieldProps<string>> = props => {
-  const { label, id, description, value, name, uiOptions, required } = props;
+  const { label, id, description, value, name, uiOptions, required, onChange } = props;
   const { designerId, currentDialog, lgFiles, shellApi, projectId, locale, userSettings, data } = useShellApi();
+  const lgBody = value || getInitialTemplate(name, value);
 
   let lgType = name;
   const $kind = data?.$kind;
@@ -42,27 +43,9 @@ const LgField: React.FC<FieldProps<string>> = props => {
     lgType = new LgType($kind, name).toString();
   }
 
-  const lgTemplateRef = LgTemplateRef.parse(value);
-  const lgName = lgTemplateRef ? lgTemplateRef.name : new LgMetaData(lgType, designerId || '').toString();
+  const lgName = new LgMetaData(lgType, designerId || '').toString();
   const lgFileId = `${currentDialog.lgFile}.${locale}`;
   const lgFile = lgFiles && lgFiles.find(file => file.id === lgFileId);
-
-  const updateLgTemplate = useCallback(
-    (body: string) => {
-      shellApi.updateLgTemplate(lgFileId, lgName, body).catch(() => {});
-    },
-    [lgName, lgFileId]
-  );
-
-  const template = (lgFile &&
-    lgFile.templates &&
-    lgFile.templates.find(template => {
-      return template.name === lgName;
-    })) || {
-    name: lgName,
-    parameters: [],
-    body: getInitialTemplate(name, value),
-  };
 
   const diagnostics = lgFile ? filterTemplateDiagnostics(lgFile, lgName) : [];
 
@@ -70,18 +53,6 @@ const LgField: React.FC<FieldProps<string>> = props => {
     projectId,
     fileId: lgFileId,
     templateId: lgName,
-  };
-
-  const onChange = (body: string) => {
-    if (designerId) {
-      if (body) {
-        updateLgTemplate(body);
-        props.onChange(new LgTemplateRef(lgName).toString());
-      } else {
-        shellApi.removeLgTemplate(lgFileId, lgName);
-        props.onChange();
-      }
-    }
   };
 
   const handleSettingsChange = (settings: Partial<CodeEditorSettings>) => {
@@ -93,7 +64,7 @@ const LgField: React.FC<FieldProps<string>> = props => {
       <FieldLabel id={id} label={label} description={description} helpLink={uiOptions?.helpLink} required={required} />
       <LgEditor
         height={225}
-        value={template.body}
+        value={lgBody}
         onChange={onChange}
         diagnostics={diagnostics}
         hidePlaceholder

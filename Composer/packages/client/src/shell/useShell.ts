@@ -13,7 +13,6 @@ import { OpenAlertModal, DialogStyle } from '../components/Modal';
 import { getFocusPath } from '../utils/navigation';
 import { isAbsHosted } from '../utils/envUtil';
 
-import { useLgApi } from './lgApi';
 import { useLuApi } from './luApi';
 import { useVirtualDialog } from './useVirtualDialog';
 
@@ -38,19 +37,18 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
     userSettings,
     skills,
   } = state;
-  const lgApi = useLgApi();
   const luApi = useLuApi();
   const updateDialog = actions.updateDialog;
   const updateVirtualDialog = actions.updateVirtualDialog;
 
   const { dialogId, selected, focused, promptTab } = designPageLocation;
   const dialogsMap = useVirtualDialog();
-  // const vSchemas = useVirtualSchema();
 
   async function updateRegExIntentHandler(id, intentName, pattern) {
     const dialog = dialogs.find(dialog => dialog.id === id);
     if (!dialog) throw new Error(`dialog ${dialogId} not found`);
     const newDialog = updateRegExIntent(dialog, intentName, pattern);
+    console.log(id, intentName, pattern, newDialog);
     return await updateDialog({ id, content: newDialog.content });
   }
 
@@ -111,6 +109,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
     },
     saveDialog: (dialogId: string, newDialogData: any) => {
       dialogMapRef.current[dialogId] = newDialogData;
+      console.log(newDialogData);
       updateDialog({
         id: dialogId,
         content: newDialogData,
@@ -122,7 +121,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
       if (source === FORM_EDITOR) {
         dataPath = updatePath || focused || '';
       }
-
+      console.log(newData);
       const updatedDialog = setDialogData(dialogMapRef.current, dialogId, dataPath, newData);
       const prevDialog = getDialogData(dialogMapRef.current, dialogId);
       const payload = {
@@ -146,8 +145,6 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
         actions.navTo(dialogId);
       }
     },
-    // TODO(zhixzhan): extension's invoke should be less
-    ...lgApi,
     ...luApi,
     updateRegExIntent: updateRegExIntentHandler,
     navTo,

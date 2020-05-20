@@ -32,7 +32,6 @@ export enum DialogGroup {
   OTHER = 'OTHER',
 }
 
-// investigate
 export interface DialogGroupItem {
   label: string;
   types: SDKKinds[];
