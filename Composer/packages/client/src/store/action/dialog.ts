@@ -27,7 +27,7 @@ const reindexLgFiles = async (id, content, files): Promise<LgFile[]> => {
 
   const newIndexeFiles: LgFile[] = [];
   for (const file of newFiles) {
-    const { templates, diagnostics } = (await LgWorker.parse(id, content, newFiles)) as LgFile;
+    const { templates, diagnostics } = (await LgWorker.parse(file.id, file.content, newFiles)) as LgFile;
     newIndexeFiles.push({ ...file, templates, diagnostics });
   }
 
@@ -45,7 +45,7 @@ const reindexLuFiles = async (id, content, files): Promise<LuFile[]> => {
 
   const newIndexeFiles: LuFile[] = [];
   for (const file of newFiles) {
-    const { intents, diagnostics } = (await LuWorker.parse(id, content)) as LuFile;
+    const { intents, diagnostics } = (await LuWorker.parse(file.id, file.content)) as LuFile;
     newIndexeFiles.push({ ...file, intents, diagnostics });
   }
 
@@ -79,8 +79,6 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
 
 /**
  * if _vProps is updated, update same id lg/lu
- * if {} is deleted, delete same id lg/lu
- * if {} is added, add same id lg/lu (depends slot a default value or not)
  */
 export const updateVirtualDialog: ActionCreator = async (store, { id, content, prevContent }) => {
   const state = store.getState();
@@ -90,10 +88,9 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
   const dialogLgFile = lgFiles.find(f => f.id === `${id}.${locale}`);
   const dialogLuFile = luFiles.find(f => f.id === `${id}.${locale}`);
 
-  /******** use diff find out current dialog related external resource updates (lg/lu) ************/
   const changes = DialogResourceChanges(prevContent, content);
 
-  console.log('dialog resourse changes: ', changes);
+  console.log('Reducer changes: ', changes);
 
   let newLgFiles: LgFile[] = [];
   let newLuFiles: LuFile[] = [];
@@ -103,20 +100,15 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
     let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
     newContent = lgUtil.addTemplates(newContent, changes.lg.adds);
     newContent = lgUtil.updateTemplates(newContent, changes.lg.updates);
-
-    if (newContent === dialogLgFile.content) {
-      newLgFiles = lgFiles;
-    } else {
+    if (newContent !== dialogLgFile.content) {
       newLgFiles = await reindexLgFiles(dialogLgFile.id, newContent, lgFiles);
     }
   }
 
   if (dialogLuFile) {
     let newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
-    newContent = luUtil.addIntents(dialogLuFile.content, changes.lu.adds);
-    if (newContent === dialogLuFile.content) {
-      newLuFiles = luFiles;
-    } else {
+    newContent = luUtil.addIntents(newContent, changes.lu.adds);
+    if (newContent !== dialogLuFile.content) {
       newLuFiles = await reindexLuFiles(dialogLuFile.id, newContent, luFiles);
     }
   }
@@ -132,7 +124,6 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
   }
 
   const payload = {
-    id,
     dialogs: newDialogs.length ? newDialogs : undefined,
     lgFiles: newLgFiles.length ? newLgFiles : undefined,
     luFiles: newLuFiles.length ? newLuFiles : undefined,

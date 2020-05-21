@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import keys from 'lodash/keys';
-import isEqual from 'lodash/isEqual';
+import { JsonDiff } from '@bfc/indexers/lib/dialogUtils/jsonDiff';
 
 import { Store, State } from '../types';
 import { setError, fetchProject } from '../action';
@@ -146,28 +146,45 @@ class FilePersistence {
     return { id: `${file.id}${fileExtension}`, change: content, type: changeType };
   }
 
-  private _getResourceFileChanges(id: string, previousState: State, currentState: State) {
+  private _resourceToContent(files: any[], ext: FileExtensions): any[] {
+    return files.reduce((result, { id, content }) => {
+      const fileId = `${id}${ext}`;
+      result[fileId] = ext === FileExtensions.Dialog ? JSON.stringify(content, null, 2) : content;
+      return result;
+    }, {});
+  }
+
+  private _getResourceFileChanges(previousState: State, currentState: State) {
     const fileChanges: IFileChange[] = [];
-    const changeType = ChangeType.UPDATE;
-    // dialog updates may also trigger lg and lu file create/delete
-    const { locale } = currentState;
-    const prevLgFile = previousState.lgFiles.find(d => d.id === `${id}.${locale}`);
-    const currLgFile = currentState.lgFiles.find(d => d.id === `${id}.${locale}`);
-    if (!isEqual(prevLgFile?.content, currLgFile?.content)) {
-      fileChanges.push(this._createChange(currLgFile, FileExtensions.Lg, changeType));
+    const prevResource = {
+      ...this._resourceToContent(previousState.dialogs, FileExtensions.Dialog),
+      ...this._resourceToContent(previousState.lgFiles, FileExtensions.Lg),
+      ...this._resourceToContent(previousState.luFiles, FileExtensions.Lu),
+    };
+    const currResource = {
+      ...this._resourceToContent(currentState.dialogs, FileExtensions.Dialog),
+      ...this._resourceToContent(currentState.lgFiles, FileExtensions.Lg),
+      ...this._resourceToContent(currentState.luFiles, FileExtensions.Lu),
+    };
+
+    const diffs = JsonDiff(prevResource, currResource);
+    const { adds, deletes, updates } = diffs;
+
+    for (const { path, value } of adds) {
+      const fileId = path.replace(/^\$\./, '').replace(/^\$\[(.*)\]/, '$1');
+      fileChanges.push({ id: fileId, change: value, type: ChangeType.CREATE });
     }
 
-    const prevLuFile = previousState.luFiles.find(d => d.id === `${id}.${locale}`);
-    const currLuFile = currentState.luFiles.find(d => d.id === `${id}.${locale}`);
-    if (!isEqual(prevLuFile?.content, currLuFile?.content)) {
-      fileChanges.push(this._createChange(currLuFile, FileExtensions.Lu, changeType));
+    for (const { path, value } of deletes) {
+      const fileId = path.replace(/^\$\./, '').replace(/^\$\[(.*)\]/, '$1');
+      fileChanges.push({ id: fileId, change: value, type: ChangeType.DELETE });
     }
 
-    const prevDialog = previousState.dialogs.find(dialog => dialog.id === id);
-    const currDialog = currentState.dialogs.find(dialog => dialog.id === id);
-    if (!isEqual(prevDialog?.content, currDialog?.content)) {
-      fileChanges.push(this._createChange(currDialog, FileExtensions.Dialog, changeType));
+    for (const { path, value } of updates) {
+      const fileId = path.replace(/^\$\./, '').replace(/^\$\[(.*)\]/, '$1');
+      fileChanges.push({ id: fileId, change: value, type: ChangeType.UPDATE });
     }
+    console.log('FilePersistence changes: ', fileChanges);
     return fileChanges;
   }
 
@@ -232,7 +249,7 @@ class FilePersistence {
 
   private _getFileChanges(previousState: State, currentState: State, action: ActionType): IFileChange[] {
     if (action.type === ActionTypes.UPDATE_VIRTUAL_DIALOG) {
-      return this._getResourceFileChanges(action.payload.id, previousState, currentState);
+      return this._getResourceFileChanges(previousState, currentState);
     }
     let fileChanges: IFileChange[] = [];
 
