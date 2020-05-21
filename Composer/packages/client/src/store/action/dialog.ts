@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import cloneDeep from 'lodash/cloneDeep';
+import isEqual from 'lodash/isEqual';
 import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 import { LgFile, LuFile } from '@bfc/shared';
+import { dialogIndexer } from '@bfc/indexers';
 
 import { ActionCreator, State } from '../types';
 import { undoable } from '../middlewares/undo';
@@ -82,8 +84,9 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
  */
 export const updateVirtualDialog: ActionCreator = async (store, { id, content, prevContent }) => {
   const state = store.getState();
-  const { lgFiles, luFiles, locale } = state;
+  const { lgFiles, luFiles, dialogs, locale, schemas } = state;
 
+  const dialogFile = dialogs.find(f => f.id === id);
   const dialogLgFile = lgFiles.find(f => f.id === `${id}.${locale}`);
   const dialogLuFile = luFiles.find(f => f.id === `${id}.${locale}`);
 
@@ -94,6 +97,7 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
 
   let newLgFiles: LgFile[] = [];
   let newLuFiles: LuFile[] = [];
+  let newDialogs: any[] = [];
 
   if (dialogLgFile) {
     let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
@@ -117,11 +121,26 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
     }
   }
 
-  const rawDialogContent = DialogConverterReverse(content);
+  const newDialogContent = DialogConverterReverse(content);
+  if (!isEqual(newDialogContent, dialogFile?.content)) {
+    newDialogs = dialogs.map(dialog => {
+      if (dialog.id === id) {
+        return { ...dialog, ...dialogIndexer.parse(dialog.id, newDialogContent, schemas.sdk.content) };
+      }
+      return dialog;
+    });
+  }
+
+  const payload = {
+    id,
+    dialogs: newDialogs.length ? newDialogs : undefined,
+    lgFiles: newLgFiles.length ? newLgFiles : undefined,
+    luFiles: newLuFiles.length ? newLuFiles : undefined,
+  };
 
   store.dispatch({
     type: ActionTypes.UPDATE_VIRTUAL_DIALOG,
-    payload: { id, content: rawDialogContent, lgFiles: newLgFiles, luFiles: newLuFiles },
+    payload,
   });
 };
 

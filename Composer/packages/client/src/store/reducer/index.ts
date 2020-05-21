@@ -219,15 +219,10 @@ const updateLuTemplate: ReducerFunc = (state, luFile: LuFile) => {
   return state;
 };
 
-const updateVirtualDialog: ReducerFunc = (state, { id, content, lgFiles, luFiles }) => {
-  state.lgFiles = lgFiles;
-  state.luFiles = luFiles;
-  state.dialogs = state.dialogs.map(dialog => {
-    if (dialog.id === id) {
-      return { ...dialog, ...dialogIndexer.parse(dialog.id, content, state.schemas.sdk.content) };
-    }
-    return dialog;
-  });
+const updateVirtualDialog: ReducerFunc = (state, { dialogs, lgFiles, luFiles }) => {
+  if (dialogs) state.dialogs = dialogs;
+  if (lgFiles) state.lgFiles = lgFiles;
+  if (luFiles) state.luFiles = luFiles;
   return state;
 };
 

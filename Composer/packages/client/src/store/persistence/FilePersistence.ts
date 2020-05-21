@@ -146,6 +146,31 @@ class FilePersistence {
     return { id: `${file.id}${fileExtension}`, change: content, type: changeType };
   }
 
+  private _getResourceFileChanges(id: string, previousState: State, currentState: State) {
+    const fileChanges: IFileChange[] = [];
+    const changeType = ChangeType.UPDATE;
+    // dialog updates may also trigger lg and lu file create/delete
+    const { locale } = currentState;
+    const prevLgFile = previousState.lgFiles.find(d => d.id === `${id}.${locale}`);
+    const currLgFile = currentState.lgFiles.find(d => d.id === `${id}.${locale}`);
+    if (!isEqual(prevLgFile?.content, currLgFile?.content)) {
+      fileChanges.push(this._createChange(currLgFile, FileExtensions.Lg, changeType));
+    }
+
+    const prevLuFile = previousState.luFiles.find(d => d.id === `${id}.${locale}`);
+    const currLuFile = currentState.luFiles.find(d => d.id === `${id}.${locale}`);
+    if (!isEqual(prevLuFile?.content, currLuFile?.content)) {
+      fileChanges.push(this._createChange(currLuFile, FileExtensions.Lu, changeType));
+    }
+
+    const prevDialog = previousState.dialogs.find(dialog => dialog.id === id);
+    const currDialog = currentState.dialogs.find(dialog => dialog.id === id);
+    if (!isEqual(prevDialog?.content, currDialog?.content)) {
+      fileChanges.push(this._createChange(currDialog, FileExtensions.Dialog, changeType));
+    }
+    return fileChanges;
+  }
+
   private _getDialogFileChanges(id: string, previousState: State, currentState: State, changeType: ChangeType) {
     const fileChanges: IFileChange[] = [];
     let { dialogs, luFiles, lgFiles } = currentState;
@@ -169,22 +194,7 @@ class FilePersistence {
         .forEach(lg => {
           fileChanges.push(this._createChange(lg, FileExtensions.Lg, changeType));
         });
-    } else if (changeType === ChangeType.UPDATE) {
-      // dialog updates may also trigger lg and lu file create/delete
-      const { locale } = currentState;
-      const prevLgFile = previousState.lgFiles.find(d => d.id === `${id}.${locale}`);
-      const currLgFile = currentState.lgFiles.find(d => d.id === `${id}.${locale}`);
-      if (!isEqual(prevLgFile?.content, currLgFile?.content)) {
-        fileChanges.push(this._createChange(currLgFile, FileExtensions.Lg, changeType));
-      }
-
-      const prevLuFile = previousState.luFiles.find(d => d.id === `${id}.${locale}`);
-      const currLuFile = currentState.luFiles.find(d => d.id === `${id}.${locale}`);
-      if (!isEqual(prevLuFile?.content, currLuFile?.content)) {
-        fileChanges.push(this._createChange(currLuFile, FileExtensions.Lu, changeType));
-      }
     }
-
     const dialog = dialogs.find(dialog => dialog.id === id);
     fileChanges.push(this._createChange(dialog, FileExtensions.Dialog, changeType));
     return fileChanges;
@@ -221,7 +231,11 @@ class FilePersistence {
   }
 
   private _getFileChanges(previousState: State, currentState: State, action: ActionType): IFileChange[] {
+    if (action.type === ActionTypes.UPDATE_VIRTUAL_DIALOG) {
+      return this._getResourceFileChanges(action.payload.id, previousState, currentState);
+    }
     let fileChanges: IFileChange[] = [];
+
     const fileChangeType = actionType2ChangeType[action.type];
 
     if (!fileChangeType) return fileChanges;

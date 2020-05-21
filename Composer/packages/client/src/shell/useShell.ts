@@ -48,14 +48,13 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
     const dialog = dialogs.find(dialog => dialog.id === id);
     if (!dialog) throw new Error(`dialog ${dialogId} not found`);
     const newDialog = updateRegExIntent(dialog, intentName, pattern);
-    console.log(id, intentName, pattern, newDialog);
     return await updateDialog({ id, content: newDialog.content });
   }
 
   function cleanData() {
-    // TODO(zhixzhan): prevent duplicate update.
-    const cleanedData = sanitizeDialogData(dialogsMap[dialogId]);
-    if (!isEqual(dialogsMap[dialogId], cleanedData)) {
+    const dialog = dialogs.find(dialog => dialog.id === dialogId)?.content;
+    const cleanedData = sanitizeDialogData(dialog);
+    if (!isEqual(dialog, cleanedData)) {
       const payload = {
         id: dialogId,
         content: cleanedData,
@@ -109,7 +108,6 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
     },
     saveDialog: (dialogId: string, newDialogData: any) => {
       dialogMapRef.current[dialogId] = newDialogData;
-      console.log(newDialogData);
       updateDialog({
         id: dialogId,
         content: newDialogData,
@@ -121,7 +119,6 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
       if (source === FORM_EDITOR) {
         dataPath = updatePath || focused || '';
       }
-      console.log(newData);
       const updatedDialog = setDialogData(dialogMapRef.current, dialogId, dataPath, newData);
       const prevDialog = getDialogData(dialogMapRef.current, dialogId);
       const payload = {
