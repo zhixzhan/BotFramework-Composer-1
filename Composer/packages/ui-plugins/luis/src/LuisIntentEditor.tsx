@@ -7,7 +7,7 @@ import React from 'react';
 import { LuEditor, inlineModePlaceholder } from '@bfc/code-editor';
 import { FieldProps, useShellApi } from '@bfc/extension';
 import { filterSectionDiagnostics } from '@bfc/indexers';
-import { VLUPropName, VLUPropBody } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
+import { getVirtualLuis } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 import { CodeEditorSettings } from '@bfc/shared';
 
 const LuisIntentEditor: React.FC<FieldProps<string>> = props => {
@@ -21,8 +21,7 @@ const LuisIntentEditor: React.FC<FieldProps<string>> = props => {
    *
    * Both scearios, data from useShellApi are same, so here ignore props.value
    */
-  const luName = data[VLUPropName];
-  const luBody = data[VLUPropBody];
+  const { Name: luName, Body: luBody } = getVirtualLuis(data);
 
   if (!luFile) {
     return null;

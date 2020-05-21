@@ -21,47 +21,36 @@ import { getBaseName } from '../utils/help';
 
 import { DialogDiff } from './dialogDiff';
 
-export const VPropsPrefix = '_virtual_';
-export const VLUPropName = '_virtual_luis_name';
-export const VLUPropBody = '_virtual_luis_body';
+const VPropsPrefix = '_virtual_';
+const VLUPropName = '_virtual_luis_name';
+const VLUPropBody = '_virtual_luis_body';
 
-export const LGTemplateFields = ['prompt', 'unrecognizedPrompt', 'invalidPrompt', 'defaultValueResponse', 'activity']; // fields may contains lg
-export const LUIntentFields = ['intent']; // fields aby contains lu, TODO: more fields
+const LGTemplateFields = ['prompt', 'unrecognizedPrompt', 'invalidPrompt', 'defaultValueResponse', 'activity']; // fields may contains lg
 
-export const getVPropsByField = (data, field) => {
-  const virtualField = `${VPropsPrefix}${field}`;
-  return data[virtualField];
+export const getVirtualLuis = (data): LuIntentSection => {
+  return {
+    Name: data[VLUPropName],
+    Body: data[VLUPropBody],
+  };
 };
 
-/**
- *
- * @param data
- * @param field
- * @param vPropValue
- *
- * {
- *   activity: '${SendActivity_12345}'
- * }
- *  swap prop value =>
- *
- * {
- *   activity: '- hello'
- *   _virtual_activity: '${SendActivity_12345}'
- * }
- *
- */
-export const setVPropsByField = (data, field, vPropValue) => {
+const setVPropsByField = (data, field, vPropValue) => {
   const propValue = data[field];
   const virtualField = `${VPropsPrefix}${field}`;
   data[virtualField] = propValue;
   data[field] = vPropValue;
 };
 
-export const unsetVPropsByField = (data, field) => {
+const unsetVPropsByField = (data, field) => {
   const virtualField = `${VPropsPrefix}${field}`;
   const vPropValue = data[virtualField];
   delete data[virtualField];
   data[field] = vPropValue;
+};
+
+const setVirtualLuis = (data, name, body) => {
+  data[VLUPropName] = name;
+  data[VLUPropBody] = body;
 };
 
 const getFeildLgRefName = (data, field): string => {
@@ -87,7 +76,6 @@ const getContainsLuName = (data): string | undefined => {
 
 const serilizeLgRefByDesignerId = value => {
   if (has(value, '$kind')) {
-    // serilize lg ref
     LGTemplateFields.forEach(field => {
       if (has(value, field)) {
         const lgName = getFeildLgRefName(value, field);
@@ -96,35 +84,6 @@ const serilizeLgRefByDesignerId = value => {
     });
   }
 };
-
-// const getFeildLuRefName = (data, field): string => {
-//   const $kind = data?.$kind;
-//   const designerId = get(data, '$designer.id');
-//   if (!$kind || !designerId) return '';
-//   const lgType = new LgType($kind, field).toString();
-//   return new LgMetaData(lgType, designerId).toString();
-// };
-
-/**
- * compare two dialog node, find virtual property changes in it.
- * @param dialog1
- * {
- *   $designer: {id: "003038"}
- *   $kind: "Microsoft.SendActivity"
- *   activity: "- hi ${sdfsdf} ${sfsdf_123145}"
-//  *   _virtual_activity: "${SendActivity_003038()}"
- * }
- *
- * @param dialog2
- * {
- *   $designer: {id: "003038"}
- *   $kind: "Microsoft.SendActivity"
- *   activity: "- hi, updated!"
- *   _virtual_activity: "${SendActivity_003038()}"
- * }
- *
- * => lg.updates: [{ SendActivity_003038: "- hi, updated!" }]
- */
 
 export function DialogResourceChanges(
   dialog1,
@@ -156,30 +115,21 @@ export function DialogResourceChanges(
     const propName = patharr.pop() || '';
     const nodePath = patharr.join('.');
     const propValue = item.value;
-    // const vPropName = `${VPropsPrefix}${propName}`;
-    // const vPropValue = get(dialog2, `${nodePath}.${vPropName}`);
     const dialogItem = get(dialog2, nodePath);
 
     if (LGTemplateFields.includes(propName)) {
-      const lgName = getFeildLgRefName(dialogItem, propName); // or extract from vPropValue
+      const lgName = getFeildLgRefName(dialogItem, propName); // TODO: double check with vPropValue
       const lgBody = propValue;
       const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
       updateTemplates.push(lgTemplate);
     }
-    // TODO: acctually current not handle lu update
-    // else if (LUIntentFields.includes(propName)) {
-    //   const luName = dialogItem[VLUPropName];
-    //   const luBody = propValue;
-    //   const luIntent: LuIntentSection = { Name: luName, Body: luBody };
-    //   updateIntents.push(luIntent);
-    // }
   }
 
   for (const item of deletes) {
     const dialogItem = item.value;
     Object.keys(dialogItem).forEach(propName => {
       if (LGTemplateFields.includes(propName)) {
-        const lgName = getFeildLgRefName(dialogItem, propName); // or extract from vPropValue
+        const lgName = getFeildLgRefName(dialogItem, propName);
         deleteTemplateNames.push(lgName);
       }
     });
@@ -289,8 +239,7 @@ export function DialogConverter(
       if (luFile) {
         const luName = getContainsLuName(value);
         const luBody = luFile && luName && luFile.intents.find(t => t.Name === luName)?.Body; // else find in trigger
-        value[VLUPropName] = luName;
-        value[VLUPropBody] = luBody;
+        setVirtualLuis(value, luName, luBody);
       }
     }
     return false;
@@ -300,27 +249,14 @@ export function DialogConverter(
   return deDialog;
 }
 
-/**
- *
- * @param dialog
- * 1. remove vProps
- * 2. serilize ref: ${SendActivity-designerId}
- *
- */
 export function DialogConverterReverse(dialog: {
   [key: string]: any;
 }): {
   [key: string]: any;
 } {
   const deDialog = cloneDeep(dialog);
-  /**
-   *
-   * @param path , jsonPath string
-   * @param value , current node value    *
-   * @return boolean, true to stop walk    */
-  const visitor: VisitorFunc = (_path: string, value: any): boolean => {
-    // it's a valid schema dialog node.
 
+  const visitor: VisitorFunc = (_path: string, value: any): boolean => {
     if (typeof value === 'object' && !Array.isArray(value)) {
       Object.keys(value).forEach(key => {
         if (LGTemplateFields.includes(key)) {
@@ -329,7 +265,7 @@ export function DialogConverterReverse(dialog: {
           delete value[key];
         }
       });
-      serilizeLgRefByDesignerId(value);
+      serilizeLgRefByDesignerId(value); // TODO: double check
     }
     return false;
   };
