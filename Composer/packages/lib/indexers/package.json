@@ -31,6 +31,7 @@
     "@microsoft/bf-lu": "4.9.0",
     "adaptive-expressions": "^4.8.0-preview-110700",
     "botbuilder-lg": "^4.9.0-preview-119754",
+    "jsonpath-plus": "^4.0.0",
     "lodash": "^4.17.15"
   }
 }

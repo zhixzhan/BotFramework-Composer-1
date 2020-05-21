@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import has from 'lodash/has';
 import get from 'lodash/get';
 import set from 'lodash/set';
 import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
+import { JSONPath } from 'jsonpath-plus';
 
 import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
 
@@ -40,20 +40,15 @@ export type IStopper = (json1: any, json2: any, path: string) => boolean;
 
 export const JsonPathStart = '$';
 
-export function jsonPathToObjectPath(path: string) {
-  // eslint-disable-next-line security/detect-non-literal-regexp
-  const reg = new RegExp(`^\\${JsonPathStart}\\.?`);
-  return path.replace(reg, '');
+export function getWithJsonPath(json, path) {
+  if (path === JsonPathStart) return json;
+  const result = JSONPath({ path, json });
+  return result.length === 0 ? undefined : result[0];
 }
-export function getWithJsonPath(value, path) {
-  if (path === JsonPathStart) return value;
-  const objPath = jsonPathToObjectPath(path);
-  return get(value, objPath);
-}
-export function hasWithJsonPath(value, path) {
+export function hasWithJsonPath(json, path) {
   if (path === JsonPathStart) return true;
-  const objPath = jsonPathToObjectPath(path);
-  return has(value, objPath);
+  const result = JSONPath({ path, json });
+  return result.length !== 0;
 }
 
 /**
@@ -87,8 +82,10 @@ export const defaultJSONAddComparator: IComparator = (json1: any, json2: any, pa
 export const defaultJSONUpdateComparator: IComparator = (json1: any, json2: any, path: string) => {
   const value1 = getWithJsonPath(json1, path);
   const value2 = getWithJsonPath(json2, path);
+  const hasValue1 = hasWithJsonPath(json1, path);
+  const hasValue2 = hasWithJsonPath(json2, path);
   // _isEqual comparison use http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero
-  const isChange = hasWithJsonPath(json1, path) && hasWithJsonPath(json2, path) && !isEqual(value1, value2);
+  const isChange = hasValue1 && hasValue2 && !isEqual(value1, value2);
   const isStop = defualtJSONStopComparison(json1, json2, path);
   return { isChange, isStop };
 };
