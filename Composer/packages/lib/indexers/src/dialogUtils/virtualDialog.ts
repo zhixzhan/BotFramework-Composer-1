@@ -110,19 +110,15 @@ export function DialogResourceChanges(
   const updateIntents: LuIntentSection[] = []; // lu need to update
 
   for (const item of updates) {
-    const patharr = item.path.split('.');
-    patharr.shift();
-    const propName = patharr.pop() || '';
-    const nodePath = patharr.join('.');
-    const propValue = item.value;
-    const dialogItem = get(dialog2, nodePath);
-
-    if (LGTemplateFields.includes(propName)) {
-      const lgName = getFeildLgRefName(dialogItem, propName); // TODO: double check with vPropValue
-      const lgBody = propValue;
-      const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
-      updateTemplates.push(lgTemplate);
-    }
+    const dialogItem = item.value;
+    Object.keys(dialogItem).forEach(propName => {
+      if (LGTemplateFields.includes(propName)) {
+        const lgName = getFeildLgRefName(dialogItem, propName); // TODO: double check with vPropValue
+        const lgBody = dialogItem[propName];
+        const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
+        updateTemplates.push(lgTemplate);
+      }
+    });
   }
 
   for (const item of deletes) {

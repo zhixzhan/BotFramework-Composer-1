@@ -55,7 +55,7 @@ function isSameKind(value1: DialogObject, value2: DialogObject): boolean {
 }
 
 function isAtomicKind(value1: DialogObject, value2: DialogObject): boolean {
-  const AtomicKinds = [SDKKinds.SendActivity];
+  const AtomicKinds = [SDKKinds.SendActivity, SDKKinds.TextInput];
   return intersection([get(value1, '$kind'), get(value2, '$kind')], AtomicKinds).length !== 0;
 }
 
