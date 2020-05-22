@@ -13,8 +13,6 @@ const createThrottledFunc = fn => throttle(fn, 1000, { leading: true, trailing: 
 
 function createLuApi(state: State, actions: BoundActionHandlers, luFileResolver: (id: string) => LuFile | undefined) {
   const updateLuIntent = async (id: string, intentName: string, intent: LuIntentSection) => {
-    // TODO(zhixzhan): remove log
-    console.log('shell updateLuIntent', id, intentName);
     const file = luFileResolver(id);
     if (!file) throw new Error(`lu file ${id} not found`);
     if (!intentName) throw new Error(`intentName is missing or empty`);
