@@ -10,7 +10,7 @@ import {
   hasWithJsonPath,
   JsonSet,
   JsonInsert,
-  defaultJSONUpdateComparator,
+  defaultJSONComparator,
   defualtJSONStopComparison,
 } from '../../src/dialogUtils/jsonDiff';
 
@@ -22,36 +22,37 @@ describe('json diff check comparators', () => {
     expect(defualtJSONStopComparison(1, 'a', '$')).toEqual(true);
   });
 
-  it('defaultJSONUpdateComparator', () => {
-    const result1 = defaultJSONUpdateComparator({}, { a: 1 }, '$');
+  it('defaultJSONComparator', () => {
+    const result1 = defaultJSONComparator({}, { a: 1 }, '$');
     expect(result1.isChange).toEqual(true);
     expect(result1.isStop).toEqual(false);
 
-    const result2 = defaultJSONUpdateComparator({}, { a: 1 }, '$.a');
+    const result2 = defaultJSONComparator({}, { a: 1 }, '$.a');
     expect(result2.isChange).toEqual(false); // '$.a' is an `add` not `update`
     expect(result2.isStop).toEqual(true);
+    expect(result2.isAdd).toEqual(true);
 
-    const result3 = defaultJSONUpdateComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$.a');
+    const result3 = defaultJSONComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$.a');
     expect(result3.isChange).toEqual(true); // '$.a' update from 0 to 1
     expect(result3.isStop).toEqual(true);
 
-    const result4 = defaultJSONUpdateComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$.b');
+    const result4 = defaultJSONComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$.b');
     expect(result4.isChange).toEqual(true); // '$.a' update from 2 to []
     expect(result4.isStop).toEqual(true);
 
-    const result5 = defaultJSONUpdateComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$');
+    const result5 = defaultJSONComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$');
     expect(result5.isChange).toEqual(true);
     expect(result5.isStop).toEqual(false);
 
-    const result6 = defaultJSONUpdateComparator([1, 2], { a: 1, b: [] }, '$');
+    const result6 = defaultJSONComparator([1, 2], { a: 1, b: [] }, '$');
     expect(result6.isChange).toEqual(true); // update on '$'
     expect(result6.isStop).toEqual(true);
 
-    const result7 = defaultJSONUpdateComparator([1, 2], [1, 22, 3], '$.[1]');
+    const result7 = defaultJSONComparator([1, 2], [1, 22, 3], '$.[1]');
     expect(result7.isChange).toEqual(true);
     expect(result7.isStop).toEqual(true);
 
-    const result8 = defaultJSONUpdateComparator([1, 2], [1, 22, 3], '$.[0]');
+    const result8 = defaultJSONComparator([1, 2], [1, 22, 3], '$.[0]');
     expect(result8.isChange).toEqual(false);
     expect(result8.isStop).toEqual(true);
   });
@@ -250,10 +251,11 @@ describe('json diff with customize comparator', () => {
     const myComparator: IComparator = (json1: any, json2: any, path: string) => {
       if (hasWithJsonPath(json1, `${path}.id`) && hasWithJsonPath(json2, `${path}.id`)) {
         const isChange = !isEqual(getWithJsonPath(json1, `${path}.id`), getWithJsonPath(json2, `${path}.id`));
+        const isAdd = !hasWithJsonPath(json1, path) && hasWithJsonPath(json1, path);
         const isStop = isChange || defualtJSONStopComparison(json1, json2, path);
-        return { isChange, isStop };
+        return { isChange, isAdd, isStop };
       } else {
-        return defaultJSONUpdateComparator(json1, json2, path);
+        return defaultJSONComparator(json1, json2, path);
       }
     };
 

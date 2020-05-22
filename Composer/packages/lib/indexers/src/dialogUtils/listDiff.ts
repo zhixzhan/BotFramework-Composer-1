@@ -94,7 +94,8 @@ export function deconstructChangesInListUpdateChanges(
 export function ListDiff(list1: any[], list2: any[], comparator?: IComparator): IJsonChanges {
   const usedComparator = (item1, item2): boolean => {
     if (comparator) {
-      return !comparator(item1, item2, '$').isChange;
+      const { isChange } = comparator(item1, item2, '$');
+      return !isChange;
     } else {
       return isEqual(item1, item2);
     }

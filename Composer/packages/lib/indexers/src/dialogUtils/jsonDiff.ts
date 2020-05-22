@@ -35,7 +35,11 @@ export interface IJsonChanges {
   updates: IJSONChangeUpdate[];
 }
 
-export type IComparator = (json1: any, json2: any, path: string) => { isChange: boolean; isStop: boolean };
+export type IComparator = (
+  json1: any,
+  json2: any,
+  path: string
+) => { isChange: boolean; isAdd: boolean; isStop: boolean };
 export type IStopper = (json1: any, json2: any, path: string) => boolean;
 
 export const JsonPathStart = '$';
@@ -71,43 +75,37 @@ export const defualtJSONStopComparison: IStopper = (json1: any, json2: any, path
   return false;
 };
 
-// compare json2 to json1 at path is an add.
-export const defaultJSONAddComparator: IComparator = (json1: any, json2: any, path: string) => {
-  const isChange = hasWithJsonPath(json1, path) === false && hasWithJsonPath(json2, path) === true;
-  const isStop = isChange || defualtJSONStopComparison(json1, json2, path);
-  return { isChange, isStop };
-};
-
 // compare json2 to json1 at path is an update.
-export const defaultJSONUpdateComparator: IComparator = (json1: any, json2: any, path: string) => {
+export const defaultJSONComparator: IComparator = (json1: any, json2: any, path: string) => {
   const value1 = getWithJsonPath(json1, path);
   const value2 = getWithJsonPath(json2, path);
   const hasValue1 = hasWithJsonPath(json1, path);
   const hasValue2 = hasWithJsonPath(json2, path);
   // _isEqual comparison use http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero
   const isChange = hasValue1 && hasValue2 && !isEqual(value1, value2);
+  const isAdd = !hasValue1 && hasValue2;
   const isStop = defualtJSONStopComparison(json1, json2, path);
-  return { isChange, isStop };
+  return { isChange, isAdd, isStop };
 };
 
-export function JsonDiffAdds(prevJson, currJson): IJSONChangeAdd[] {
+export function JsonDiffAdds(prevJson, currJson, comparator?: IComparator): IJSONChangeAdd[] {
   const results: IJSONChangeAdd[] = [];
 
-  const usedComparator = defaultJSONAddComparator;
+  const usedComparator = comparator || defaultJSONComparator;
   const visitor: VisitorFunc = (path, value) => {
     // if both value are array, pass to ListDiffer
     const value1 = getWithJsonPath(prevJson, path);
     const value2 = getWithJsonPath(currJson, path);
     if (Array.isArray(value1) && Array.isArray(value2)) {
-      const listChanges = ListDiff(value1, value2).adds.map(item => {
+      const listChanges = ListDiff(value1, value2, usedComparator).adds.map(item => {
         item.path = `${path}${item.path}`;
         return item;
       });
       results.push(...listChanges);
       return true;
     } else {
-      const { isChange, isStop } = usedComparator(prevJson, currJson, path);
-      if (isChange) {
+      const { isAdd, isStop } = usedComparator(prevJson, currJson, path);
+      if (isAdd && isStop) {
         results.push({ path, value });
       }
       if (isStop) {
@@ -122,13 +120,13 @@ export function JsonDiffAdds(prevJson, currJson): IJSONChangeAdd[] {
   return results;
 }
 
-export function JsonDiffDeletes(prevJson, currJson): IJSONChangeDelete[] {
-  return JsonDiffAdds(currJson, prevJson);
+export function JsonDiffDeletes(prevJson, currJson, comparator?: IComparator): IJSONChangeDelete[] {
+  return JsonDiffAdds(currJson, prevJson, comparator);
 }
 
 export function JsonDiffUpdates(prevJson, currJson, comparator?: IComparator): IJSONChangeUpdate[] {
   const results: IJSONChangeUpdate[] = [];
-  const usedComparator = comparator || defaultJSONUpdateComparator;
+  const usedComparator = comparator || defaultJSONComparator;
 
   const visitor: VisitorFunc = (path, value) => {
     // if both value are array, pass to ListDiffer
@@ -178,8 +176,8 @@ export function JsonDiffUpdates(prevJson, currJson, comparator?: IComparator): I
  */
 export function JsonDiff(prevJson, currJson, comparator?: IComparator): IJsonChanges {
   return {
-    adds: JsonDiffAdds(prevJson, currJson),
-    deletes: JsonDiffDeletes(prevJson, currJson),
+    adds: JsonDiffAdds(prevJson, currJson, comparator),
+    deletes: JsonDiffDeletes(prevJson, currJson, comparator),
     updates: JsonDiffUpdates(prevJson, currJson, comparator),
   };
 }

@@ -136,6 +136,31 @@ describe('dialog diff', () => {
     expect(changes1.adds.length).toEqual(0);
     expect(changes1.deletes.length).toEqual(0);
     expect(changes1.updates.length).toEqual(1);
+    expect(changes1.updates[0].path).toEqual(`$.triggers[7].actions[0]`);
+    expect(changes1.updates[0].value.activity).toEqual(inserts1[0].value);
+    expect(changes1.updates[0].preValue).toEqual(get(baseDialog, 'triggers[7].actions[0]'));
+  });
+
+  it('check action move', () => {
+    const inserts1 = [
+      {
+        path: 'triggers[7].actions[0]',
+        value: {
+          $kind: 'Microsoft.BeginDialog',
+          $designer: {
+            id: '365215',
+            name: 'Begin a new dialog',
+          },
+          activityProcessed: true,
+          dialog: 'moveToDialog',
+        },
+      },
+    ];
+    const dialog1 = JsonSet(baseDialog, inserts1);
+    const changes1 = DialogDiff(baseDialog, dialog1);
+    expect(changes1.adds.length).toEqual(0);
+    expect(changes1.deletes.length).toEqual(0);
+    expect(changes1.updates.length).toEqual(1);
     expect(changes1.updates[0].path).toEqual(`$.${inserts1[0].path}`);
     expect(changes1.updates[0].value).toEqual(inserts1[0].value);
     expect(changes1.updates[0].preValue).toEqual(get(baseDialog, inserts1[0].path));
