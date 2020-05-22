@@ -6,7 +6,12 @@ import fs from 'fs';
 import get from 'lodash/get';
 
 import { JsonSet, JsonInsert } from '../../src/dialogUtils/jsonDiff';
-import { DialogConverter, DialogConverterReverse, DialogResourceChanges } from '../../src/dialogUtils/virtualDialog';
+import {
+  DialogConverter,
+  DialogConverterReverse,
+  DialogResourceChanges,
+  VirtualDialogResource,
+} from '../../src/dialogUtils/virtualDialog';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 
@@ -50,7 +55,7 @@ describe('Virtual Dialog Convert', () => {
   });
 });
 
-describe('Virtual Dialog Resources', () => {
+describe('Virtual Dialog Resources Changes', () => {
   it('update by virtual property', () => {
     const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
     const insert1 = [
@@ -119,7 +124,7 @@ describe('Virtual Dialog Resources', () => {
               $designer: {
                 id: 'kbvD42',
               },
-              activity: '${SendActivity_kbvD42()}',
+              activity: '- hello',
             },
           ],
         },
@@ -130,7 +135,7 @@ describe('Virtual Dialog Resources', () => {
 
     const changes = DialogResourceChanges(vdialog1, vdialog2);
     expect(changes.lg.updates.length).toEqual(0);
-    expect(changes.lg.adds.length).toEqual(0);
+    expect(changes.lg.adds.length).toEqual(1);
     expect(changes.lg.deletes.length).toEqual(0);
     expect(changes.lu.updates.length).toEqual(0);
     expect(changes.lu.adds.length).toEqual(1);
@@ -174,5 +179,46 @@ describe('Virtual Dialog Resources', () => {
     expect(changes.lu.adds[0].Name).toEqual('TextInput_Response_96TcCU');
     expect(changes.lu.adds[0].Body).toEqual('-23');
     expect(changes.lu.deletes.length).toEqual(0);
+  });
+});
+
+describe('VirtualDialogResource', () => {
+  it('resource in virtual dialog', () => {
+    const virtualDialog = {
+      $kind: 'Microsoft.AdaptiveDialog',
+      $designer: {
+        id: '6uQuGV',
+        name: 'm7',
+        description: '',
+      },
+      autoEndDialog: true,
+      defaultResultProperty: 'dialog.result',
+      triggers: [
+        {
+          $kind: 'Microsoft.OnBeginDialog',
+          $designer: {
+            name: 'BeginDialog',
+            description: '',
+            id: 'Sdvm07',
+          },
+          actions: [
+            {
+              $kind: 'Microsoft.SendActivity',
+              $designer: {
+                id: 'WezpV5',
+              },
+              activity: '- hello',
+              _virtual_activity: '${SendActivity_c7Wg7i()}',
+            },
+          ],
+        },
+      ],
+      generator: 'm7.lg',
+    };
+
+    const resources = VirtualDialogResource(virtualDialog);
+    expect(resources.lg.length).toEqual(1);
+    expect(resources.lg[0]).toEqual({ name: 'SendActivity_WezpV5', body: '- hello', parameters: [] });
+    expect(resources.lu.length).toEqual(0);
   });
 });

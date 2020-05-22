@@ -85,10 +85,48 @@ const serilizeLgRefByDesignerId = value => {
   }
 };
 
-export function DialogResourceChanges(
-  dialog1,
-  dialog2
+export function VirtualDialogResource(
+  dialog
 ): {
+  lg: LgTemplate[];
+  lu: LuIntentSection[];
+} {
+  const lg: LgTemplate[] = [];
+  const lu: LuIntentSection[] = [];
+
+  const visitor: VisitorFunc = (_path: string, value: any): boolean => {
+    if (has(value, '$kind')) {
+      const dialogItem = value;
+      Object.keys(dialogItem).forEach(propName => {
+        const propValue = dialogItem[propName];
+        if (propValue) {
+          if (LGTemplateFields.includes(propName)) {
+            const lgName = getFeildLgRefName(dialogItem, propName); // TODO: double check with vPropValue
+            const lgBody = propValue;
+            const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
+            lg.push(lgTemplate);
+          }
+        }
+      });
+
+      const luName = getContainsLuName(dialogItem);
+      if (luName) {
+        const luBody = dialogItem[VLUPropBody];
+        const luIntent: LuIntentSection = { Name: luName, Body: luBody };
+        lu.push(luIntent);
+      }
+    }
+    return false;
+  };
+  JsonWalk('$', dialog, visitor);
+
+  return {
+    lg,
+    lu,
+  };
+}
+
+interface IResourceChanges {
   lg: {
     adds: LgTemplate[];
     deletes: string[];
@@ -99,82 +137,49 @@ export function DialogResourceChanges(
     deletes: string[];
     updates: LuIntentSection[];
   };
-} {
-  const diffs = DialogDiff(dialog1, dialog2);
-  const { adds, deletes, updates } = diffs;
-  const deleteTemplateNames: string[] = []; // lg need to delete
-  const deleteLuIntentNames: string[] = []; // lu need to delete
-  const addTemplates: LgTemplate[] = []; // lg need to add
-  const addIntents: LuIntentSection[] = []; // lu need to add
-  const updateTemplates: LgTemplate[] = []; // lg need to update
-  const updateIntents: LuIntentSection[] = []; // lu need to update
+}
 
+export function DialogResourceChanges(dialog1, dialog2): IResourceChanges {
+  const changes = {
+    lg: {
+      adds: [],
+      deletes: [],
+      updates: [],
+    },
+    lu: {
+      adds: [],
+      deletes: [],
+      updates: [],
+    },
+  } as IResourceChanges;
+  // find all in dialog1, treat as `adds`
+  if (!dialog2) {
+    const { lg, lu } = VirtualDialogResource(dialog1);
+    changes.lg.adds === lg;
+    changes.lu.adds === lu;
+    return changes;
+  }
+
+  const { adds, deletes, updates } = DialogDiff(dialog1, dialog2);
   for (const item of updates) {
-    const dialogItem = item.value;
-    Object.keys(dialogItem).forEach(propName => {
-      if (LGTemplateFields.includes(propName)) {
-        const lgName = getFeildLgRefName(dialogItem, propName); // TODO: double check with vPropValue
-        const lgBody = dialogItem[propName];
-        const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
-        updateTemplates.push(lgTemplate);
-      }
-    });
+    const { lg, lu } = VirtualDialogResource(item.value);
+    changes.lg.updates.push(...lg);
+    changes.lu.updates.push(...lu);
   }
 
   for (const item of deletes) {
-    const dialogItem = item.value;
-    Object.keys(dialogItem).forEach(propName => {
-      if (LGTemplateFields.includes(propName)) {
-        const lgName = getFeildLgRefName(dialogItem, propName);
-        deleteTemplateNames.push(lgName);
-      }
-    });
-
-    const luName = getContainsLuName(dialogItem);
-    if (luName) {
-      deleteLuIntentNames.push(luName);
-    }
+    const { lg, lu } = VirtualDialogResource(item.value);
+    changes.lg.deletes.push(...lg.map(({ name }) => name));
+    changes.lu.deletes.push(...lu.map(({ Name }) => Name));
   }
 
-  // create lg template if added dialog node needs
   for (const item of adds) {
-    const dialogItem = item.value;
-
-    Object.keys(dialogItem).forEach(propName => {
-      const propValue = dialogItem[propName];
-      if (propValue) {
-        if (LGTemplateFields.includes(propName)) {
-          const kind = dialogItem.$kind;
-          const designerId = get(dialogItem, '$designer.id');
-          const lgType = new LgType(kind, propName).toString();
-          const lgName = new LgMetaData(lgType, designerId || '').toString();
-          const lgBody = propValue;
-          const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
-          addTemplates.push(lgTemplate);
-        }
-      }
-    });
-
-    const luName = getContainsLuName(dialogItem);
-    if (luName) {
-      const luBody = dialogItem[VLUPropBody];
-      const luIntent: LuIntentSection = { Name: luName, Body: luBody };
-      addIntents.push(luIntent);
-    }
+    const { lg, lu } = VirtualDialogResource(item.value);
+    changes.lg.adds.push(...lg);
+    changes.lu.adds.push(...lu);
   }
 
-  return {
-    lg: {
-      adds: addTemplates,
-      deletes: deleteTemplateNames,
-      updates: updateTemplates,
-    },
-    lu: {
-      adds: addIntents,
-      deletes: deleteLuIntentNames,
-      updates: updateIntents,
-    },
-  };
+  return changes;
 }
 
 export function DialogConverter(

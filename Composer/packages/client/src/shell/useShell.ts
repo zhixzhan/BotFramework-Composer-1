@@ -108,7 +108,7 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
     },
     saveDialog: (dialogId: string, newDialogData: any) => {
       dialogMapRef.current[dialogId] = newDialogData;
-      updateDialog({
+      updateVirtualDialog({
         id: dialogId,
         content: newDialogData,
         projectId,
@@ -174,7 +174,6 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   const currentDialog = useMemo(() => dialogs.find(d => d.id === dialogId), [dialogs, dialogId]);
 
   const editorData = useMemo(() => {
-    // console.log(dialogsMap);
     return source === 'PropertyEditor'
       ? getDialogData(dialogsMap, dialogId, focused || selected || '')
       : getDialogData(dialogsMap, dialogId);

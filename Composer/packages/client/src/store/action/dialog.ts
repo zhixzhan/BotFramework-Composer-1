@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import cloneDeep from 'lodash/cloneDeep';
+
 import isEqual from 'lodash/isEqual';
 import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 import { LgFile, LuFile } from '@bfc/shared';
@@ -15,42 +15,6 @@ import LuWorker from '../parsers/luWorker';
 
 import { ActionTypes } from './../../constants/index';
 import { Store } from './../types';
-
-const reindexLgFiles = async (id, content, files): Promise<LgFile[]> => {
-  const newFiles = cloneDeep(files).map(f => {
-    if (f.id === id) {
-      f.content = content;
-      return f;
-    }
-    return f;
-  });
-
-  const newIndexeFiles: LgFile[] = [];
-  for (const file of newFiles) {
-    const { templates, diagnostics } = (await LgWorker.parse(file.id, file.content, newFiles)) as LgFile;
-    newIndexeFiles.push({ ...file, templates, diagnostics });
-  }
-
-  return newIndexeFiles;
-};
-
-const reindexLuFiles = async (id, content, files): Promise<LuFile[]> => {
-  const newFiles = cloneDeep(files).map(f => {
-    if (f.id === id) {
-      f.content = content;
-      return f;
-    }
-    return f;
-  });
-
-  const newIndexeFiles: LuFile[] = [];
-  for (const file of newFiles) {
-    const { intents, diagnostics } = (await LuWorker.parse(file.id, file.content)) as LuFile;
-    newIndexeFiles.push({ ...file, intents, diagnostics });
-  }
-
-  return newIndexeFiles;
-};
 
 export const removeDialog: ActionCreator = (store, id) => {
   store.dispatch({
@@ -77,9 +41,6 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
   });
 };
 
-/**
- * if _vProps is updated, update same id lg/lu
- */
 export const updateVirtualDialog: ActionCreator = async (store, { id, content, prevContent }) => {
   const state = store.getState();
   const { lgFiles, luFiles, dialogs, locale, schemas } = state;
@@ -92,16 +53,17 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
 
   console.log('Reducer changes: ', changes);
 
-  let newLgFiles: LgFile[] = [];
-  let newLuFiles: LuFile[] = [];
-  let newDialogs: any[] = [];
+  let newLgFile;
+  let newLuFile;
+  let newDialog;
 
   if (dialogLgFile) {
     let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
     newContent = lgUtil.addTemplates(newContent, changes.lg.adds);
     newContent = lgUtil.updateTemplates(newContent, changes.lg.updates);
     if (newContent !== dialogLgFile.content) {
-      newLgFiles = await reindexLgFiles(dialogLgFile.id, newContent, lgFiles);
+      const { templates, diagnostics } = (await LgWorker.parse(dialogLgFile.id, newContent, lgFiles)) as LgFile;
+      newLgFile = { id: dialogLgFile.id, content: newContent, templates, diagnostics };
     }
   }
 
@@ -109,29 +71,23 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
     let newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
     newContent = luUtil.addIntents(newContent, changes.lu.adds);
     if (newContent !== dialogLuFile.content) {
-      newLuFiles = await reindexLuFiles(dialogLuFile.id, newContent, luFiles);
+      const { intents, diagnostics } = (await LuWorker.parse(dialogLuFile.id, newContent)) as LuFile;
+      newLuFile = { id: dialogLuFile.id, content: newContent, intents, diagnostics };
     }
   }
 
   const newDialogContent = DialogConverterReverse(content);
-  if (!isEqual(newDialogContent, dialogFile?.content)) {
-    newDialogs = dialogs.map(dialog => {
-      if (dialog.id === id) {
-        return { ...dialog, ...dialogIndexer.parse(dialog.id, newDialogContent, schemas.sdk.content) };
-      }
-      return dialog;
-    });
+  if (dialogFile && !isEqual(newDialogContent, dialogFile.content)) {
+    newDialog = { ...dialogFile, ...dialogIndexer.parse(dialogFile.id, newDialogContent, schemas.sdk.content) };
   }
-
-  const payload = {
-    dialogs: newDialogs.length ? newDialogs : undefined,
-    lgFiles: newLgFiles.length ? newLgFiles : undefined,
-    luFiles: newLuFiles.length ? newLuFiles : undefined,
-  };
 
   store.dispatch({
     type: ActionTypes.UPDATE_VIRTUAL_DIALOG,
-    payload,
+    payload: {
+      dialog: newDialog,
+      lgFile: newLgFile,
+      luFile: newLuFile,
+    },
   });
 };
 
