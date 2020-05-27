@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import cloneDeep from 'lodash/cloneDeep';
-import { useContext, useEffect, useState } from 'react';
-import { DialogConverter } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
+import { useContext, useEffect, useState, useMemo } from 'react';
+import { DialogConverter, VirtualSchemaConverter } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
 
 import { State } from '../store/types';
 import { StoreContext } from '../store';
@@ -36,4 +36,16 @@ export function useVirtualDialog() {
 
   // console.log(dialogsMap);
   return dialogsMap;
+}
+
+export function useVirtualSchema() {
+  const { state } = useContext(StoreContext);
+  const { projectId, schemas } = state;
+  const vSchema = useMemo(() => {
+    const newSchema = cloneDeep(schemas);
+    newSchema.sdk.content = VirtualSchemaConverter(schemas.sdk.content);
+    return newSchema;
+  }, [projectId, schemas]);
+
+  return vSchema;
 }

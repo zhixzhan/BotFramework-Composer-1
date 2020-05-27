@@ -21,6 +21,9 @@ export function resolveFieldWidget(
     return FieldOverride;
   }
 
+  console.log(schema);
+  console.log(uiOptions);
+  // console.log(globalConfig);
   if (schema) {
     if (globalConfig) {
       const RoleOverride = schema.$role && globalConfig?.roleSchema[schema.$role]?.field;

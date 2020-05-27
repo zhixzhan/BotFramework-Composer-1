@@ -122,6 +122,9 @@ export enum SDKKinds {
   TrueSelector = 'Microsoft.TrueSelector',
   UpdateActivity = 'Microsoft.UpdateActivity',
   UrlEntityRecognizer = 'Microsoft.UrlEntityRecognizer',
+  VirtualLG = 'VirtualLG',
+  VirtualLU = 'VirtualLU',
+  VirtualTemplateString = 'VirtualTemplateString',
 }
 
 export enum SDKRoles {

@@ -4,6 +4,7 @@
 import fs from 'fs';
 
 import get from 'lodash/get';
+import { SDKKinds } from '@bfc/shared';
 
 import { JsonSet, JsonInsert } from '../../src/dialogUtils/jsonDiff';
 import {
@@ -11,10 +12,14 @@ import {
   DialogConverterReverse,
   DialogResourceChanges,
   VirtualDialogResource,
+  VirtualSchemaConverter,
+  VirtualLGPropName,
+  VirtualLUPropName,
 } from '../../src/dialogUtils/virtualDialog';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 
+const schema = JSON.parse(fs.readFileSync(`${__dirname}/data/schemas/sdk.schema`, 'utf-8'));
 const dialogFile = JSON.parse(fs.readFileSync(`${__dirname}/data/todobotwithluissample.dialog`, 'utf-8'));
 const lgFile = lgIndexer.parse(
   fs.readFileSync(`${__dirname}/data/language-generation/en-us/todobotwithluissample.en-us.lg`, 'utf-8')
@@ -31,21 +36,37 @@ const luFileResolver = () => {
   return luFile;
 };
 
+describe('Virtual Schema Convert', () => {
+  it('can convert normal schema into virtual schema', () => {
+    const schema1 = VirtualSchemaConverter(schema);
+    expect(get(schema1, ['definitions', SDKKinds.VirtualLG, 'title'])).toEqual('Virtual LG');
+    const askWithVirtual = get(schema1, ['definitions', SDKKinds.Ask, 'properties', VirtualLGPropName]);
+    expect(Object.keys(askWithVirtual).length).toEqual(1);
+    expect(get(askWithVirtual, 'activity.$kind')).toEqual(SDKKinds.VirtualTemplateString);
+  });
+});
+
 describe('Virtual Dialog Convert', () => {
   it('should convert dialog -> virtual dialog', () => {
     const convertedDialog = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
 
-    expect(get(convertedDialog, 'triggers[0].actions[0].actions[0].actions[0]._virtual_activity')).toEqual(
+    expect(get(convertedDialog, 'triggers[0].actions[0].actions[0].actions[0].activity')).toEqual(
       '${SendActivity_202664()}'
     );
-    expect(get(convertedDialog, 'triggers[0].actions[0].actions[0].actions[0].activity')).toContain('[Activity');
+    const vItem1 = get(convertedDialog, `triggers[0].actions[0].actions[0].actions[0].${VirtualLGPropName}`);
 
-    expect(get(convertedDialog, 'triggers[6].actions[0]._virtual_prompt')).toEqual('${ConfirmInput_Prompt_107784()}');
-    expect(get(convertedDialog, 'triggers[6].actions[0].prompt')).toContain('- Are you sure you want to cancel?');
+    expect(vItem1.activity).toContain('[Activity');
 
+    const vItem2 = get(convertedDialog, `triggers[0].actions[0].actions[0].actions[1].${VirtualLGPropName}`);
+    expect(vItem2.activity).toEqual('- ');
+
+    const vItem3 = get(convertedDialog, `triggers[6].actions[0].${VirtualLGPropName}`);
+    expect(vItem3.prompt).toContain('- Are you sure you want to cancel?');
+
+    const vItem4 = get(convertedDialog, `triggers[1].${VirtualLUPropName}`);
     expect(get(convertedDialog, 'triggers[1].intent')).toEqual('Add');
-    expect(get(convertedDialog, 'triggers[1]._virtual_luis_name')).toEqual('Add');
-    expect(get(convertedDialog, 'triggers[1]._virtual_luis_body')).toContain('- Add todo');
+    expect(vItem4.name).toEqual('Add');
+    expect(vItem4.body).toContain('- Add todo');
   });
 
   it('should convert virtual dialog -> dialog', () => {
@@ -59,8 +80,8 @@ describe('Virtual Dialog Resources Changes', () => {
   it('update by virtual property', () => {
     const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
     const insert1 = [
-      { path: 'triggers[0].actions[0].actions[0].actions[0].activity', value: '- updated!' },
-      { path: 'triggers[6].actions[0].prompt', value: '- propmpt updated!' },
+      { path: `triggers[0].actions[0].actions[0].actions[0].${VirtualLGPropName}.activity`, value: '- updated!' },
+      { path: `triggers[6].actions[0].${VirtualLGPropName}.prompt`, value: '- propmpt updated!' },
     ];
 
     const vdialog2 = JsonSet(vdialog1, insert1);
@@ -88,8 +109,10 @@ describe('Virtual Dialog Resources Changes', () => {
           $designer: {
             id: 'Y39scR',
           },
-          _virtual_activity: '${SendActivity_Y39scR()}',
-          activity: "- You said '${turn.activity.text}'",
+          activity: '${SendActivity_Y39scR()}',
+          [VirtualLGPropName]: {
+            activity: "- You said '${turn.activity.text}'",
+          },
         },
       },
     ];
@@ -124,9 +147,16 @@ describe('Virtual Dialog Resources Changes', () => {
               $designer: {
                 id: 'kbvD42',
               },
-              activity: '- hello',
+              activity: '${SendActivity_kbvD42()}',
+              [VirtualLGPropName]: {
+                activity: '- hello',
+              },
             },
           ],
+          [VirtualLUPropName]: {
+            name: 'hello',
+            body: '- hello',
+          },
         },
       },
     ];
@@ -154,14 +184,22 @@ describe('Virtual Dialog Resources Changes', () => {
           },
           allowInterruptions: false,
           alwaysPrompt: false,
-          defaultValueResponse: '- 6',
+          prompt: '${TextInput_Prompt_96TcCU()}',
+          unrecognizedPrompt: '${TextInput_UnrecognizedPrompt_96TcCU()}',
+          invalidPrompt: '${TextInput_InvalidPrompt_96TcCU()}',
+          defaultValueResponse: '${TextInput_DefaultValueResponse_96TcCU()}',
           disabled: false,
-          invalidPrompt: '- 5',
           maxTurnCount: 3,
-          prompt: '- 1',
-          unrecognizedPrompt: '- 4',
-          _virtual_luis_body: '-23',
-          _virtual_luis_name: 'TextInput_Response_96TcCU', // may no need
+          [VirtualLGPropName]: {
+            defaultValueResponse: '- 6',
+            invalidPrompt: '- 5',
+            prompt: '- 1',
+            unrecognizedPrompt: '- 4',
+          },
+          [VirtualLUPropName]: {
+            name: 'TextInput_Response_96TcCU',
+            body: '-23',
+          },
         },
       },
     ];
@@ -207,8 +245,10 @@ describe('VirtualDialogResource', () => {
               $designer: {
                 id: 'WezpV5',
               },
-              activity: '- hello',
-              _virtual_activity: '${SendActivity_c7Wg7i()}',
+              activity: '${SendActivity_c7Wg7i()}',
+              [VirtualLGPropName]: {
+                activity: '- hello',
+              },
             },
           ],
         },

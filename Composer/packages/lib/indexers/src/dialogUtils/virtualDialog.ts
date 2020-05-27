@@ -3,6 +3,7 @@
 
 import has from 'lodash/has';
 import get from 'lodash/get';
+import set from 'lodash/set';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   extractLgTemplateRefs,
@@ -21,36 +22,36 @@ import { getBaseName } from '../utils/help';
 
 import { DialogDiff } from './dialogDiff';
 
-const VPropsPrefix = '_virtual_';
-const VLUPropName = '_virtual_luis_name';
-const VLUPropBody = '_virtual_luis_body';
+export const VirtualLGPropName = '_virtual_lg';
+export const VirtualLUPropName = '_virtual_lu';
 
 const LGTemplateFields = ['prompt', 'unrecognizedPrompt', 'invalidPrompt', 'defaultValueResponse', 'activity']; // fields may contains lg
 
 export const getVirtualLuis = (data): LuIntentSection => {
-  return {
-    Name: data[VLUPropName],
-    Body: data[VLUPropBody],
-  };
+  const { name: Name, body: Body } = get(data, VirtualLUPropName, {});
+  return { Name, Body };
 };
 
-const setVPropsByField = (data, field, vPropValue) => {
-  const propValue = data[field];
-  const virtualField = `${VPropsPrefix}${field}`;
-  data[virtualField] = propValue;
-  data[field] = vPropValue;
+export const getVirtualLG = (data, field): string => {
+  return get(data, [VirtualLGPropName, field]);
 };
 
-const unsetVPropsByField = (data, field) => {
-  const virtualField = `${VPropsPrefix}${field}`;
-  const vPropValue = data[virtualField];
-  delete data[virtualField];
-  data[field] = vPropValue;
+const setVirtualLG = (data, field, fieldValue) => {
+  const virtualLGPropValue = data[VirtualLGPropName] || {};
+  virtualLGPropValue[field] = fieldValue;
+  data[VirtualLGPropName] = virtualLGPropValue;
 };
 
 const setVirtualLuis = (data, name, body) => {
-  data[VLUPropName] = name;
-  data[VLUPropBody] = body;
+  data[VirtualLUPropName] = {
+    name,
+    body,
+  };
+};
+
+const unsetVirtualProps = data => {
+  delete data[VirtualLGPropName];
+  delete data[VirtualLUPropName];
 };
 
 const getFeildLgRefName = (data, field): string => {
@@ -97,23 +98,29 @@ export function VirtualDialogResource(
   const visitor: VisitorFunc = (_path: string, value: any): boolean => {
     if (has(value, '$kind')) {
       const dialogItem = value;
-      Object.keys(dialogItem).forEach(propName => {
-        const propValue = dialogItem[propName];
-        if (propValue) {
-          if (LGTemplateFields.includes(propName)) {
-            const lgName = getFeildLgRefName(dialogItem, propName); // TODO: double check with vPropValue
-            const lgBody = propValue;
-            const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
-            lg.push(lgTemplate);
+      const virtualLgItem = value[VirtualLGPropName];
+      const virtualLuItem = value[VirtualLUPropName];
+      if (virtualLgItem) {
+        Object.keys(virtualLgItem).forEach(propName => {
+          const propValue = virtualLgItem[propName];
+          if (propValue) {
+            if (LGTemplateFields.includes(propName)) {
+              const lgName = getFeildLgRefName(dialogItem, propName); // TODO: double check with vPropValue
+              const lgBody = propValue;
+              const lgTemplate: LgTemplate = { name: lgName, body: lgBody, parameters: [] };
+              lg.push(lgTemplate);
+            }
           }
-        }
-      });
+        });
+      }
 
-      const luName = getContainsLuName(dialogItem);
-      if (luName) {
-        const luBody = dialogItem[VLUPropBody];
-        const luIntent: LuIntentSection = { Name: luName, Body: luBody };
-        lu.push(luIntent);
+      if (virtualLuItem) {
+        const luName = getContainsLuName(dialogItem);
+        if (luName) {
+          const { Body } = getVirtualLuis(dialogItem);
+          const luIntent: LuIntentSection = { Name: luName, Body };
+          lu.push(luIntent);
+        }
       }
     }
     return false;
@@ -199,15 +206,11 @@ export function DialogConverter(
   const lgFile = lgFileResolver(lgFileId);
   const luFile = luFileResolver(luFileId);
 
-  const deDialog = cloneDeep(dialog);
-  /**
-   *
-   * @param path , jsonPath string
-   * @param value , current node value    *
-   * @return boolean, true to stop walk    */
+  const vDialog = cloneDeep(dialog);
   const visitor: VisitorFunc = (_path: string, value: any): boolean => {
     // it's a valid schema dialog node.
     if (has(value, '$kind')) {
+      const $kind = value.$kind;
       if (lgFile) {
         // find lg templates in [prop], add _virtial_[prop]
         LGTemplateFields.forEach(field => {
@@ -232,12 +235,12 @@ export function DialogConverter(
             if (lgTemplate) {
               vPropValue = lgTemplate.body;
             }
-            setVPropsByField(value, field, vPropValue);
+            setVirtualLG(value, field, vPropValue);
           }
         });
       }
 
-      if (luFile) {
+      if (luFile && [SDKKinds.OnIntent, SDKKinds.TextInput].includes($kind)) {
         const luName = getContainsLuName(value);
         const luBody = luFile && luName && luFile.intents.find(t => t.Name === luName)?.Body; // else find in trigger
         setVirtualLuis(value, luName, luBody);
@@ -245,9 +248,9 @@ export function DialogConverter(
     }
     return false;
   };
-  JsonWalk('$', deDialog, visitor);
+  JsonWalk('$', vDialog, visitor);
 
-  return deDialog;
+  return vDialog;
 }
 
 export function DialogConverterReverse(dialog: {
@@ -255,22 +258,101 @@ export function DialogConverterReverse(dialog: {
 }): {
   [key: string]: any;
 } {
-  const deDialog = cloneDeep(dialog);
+  const vDialog = cloneDeep(dialog);
 
   const visitor: VisitorFunc = (_path: string, value: any): boolean => {
     if (typeof value === 'object' && !Array.isArray(value)) {
       Object.keys(value).forEach(key => {
-        if (LGTemplateFields.includes(key)) {
-          unsetVPropsByField(value, key);
-        } else if ([VLUPropName, VLUPropBody].includes(key)) {
-          delete value[key];
-        }
+        unsetVirtualProps(value);
       });
       serilizeLgRefByDesignerId(value); // TODO: double check
     }
     return false;
   };
-  JsonWalk('$', deDialog, visitor);
+  JsonWalk('$', vDialog, visitor);
 
-  return deDialog;
+  return vDialog;
+}
+
+// const VirtualTemplateString = {
+//   title: 'Virtual Template String',
+//   description: '',
+//   $role: 'interface',
+//   type: 'string',
+// };
+const VirtualLG = {
+  title: 'Virtual LG',
+  description: '',
+  $role: 'interface',
+  type: 'object',
+};
+
+const VirtualLU = {
+  title: 'Virtual LU',
+  description: '',
+  $role: 'interface',
+  type: 'object',
+};
+
+export function VirtualSchemaConverter(schema: {
+  [key: string]: any;
+}): {
+  [key: string]: any;
+} {
+  const vSchema = cloneDeep(schema);
+  vSchema.definitions[SDKKinds.VirtualLG] = VirtualLG;
+  vSchema.definitions[SDKKinds.VirtualLU] = VirtualLU;
+
+  const vProperties: any[] = [];
+  const visitor: VisitorFunc = (_path: string, value: any): boolean => {
+    // extend sdk schema properties with virtual properties
+    const properties = get(value, 'properties');
+    if (properties && typeof properties === 'object') {
+      const virtualLg = {};
+      const virtualLu = {};
+      const path = _path
+        .replace(/^\$\.?/, '')
+        .split(/[\[\]]/)
+        .filter(p => !!p);
+      for (const [propName, propValue] of Object.entries(properties)) {
+        if (typeof propValue !== 'object') continue;
+
+        if (LGTemplateFields.includes(propName)) {
+          virtualLg[propName] = propValue;
+        }
+      }
+
+      if (Object.keys(virtualLg).length) {
+        vProperties.push({
+          path: [...path, 'properties', VirtualLGPropName],
+          value: {
+            properties: virtualLg,
+            $kind: SDKKinds.VirtualLG,
+            $ref: `#/definitions/${SDKKinds.VirtualLG}`,
+          },
+        });
+      }
+      if (Object.keys(virtualLu).length) {
+        vProperties.push({
+          path: [...path, 'properties', VirtualLUPropName],
+          value: {
+            properties: virtualLu,
+            $kind: SDKKinds.VirtualLU,
+            $ref: `#/definitions/${SDKKinds.VirtualLU}`,
+          },
+        });
+      }
+
+      // set(value, 'properties', properties);
+    }
+    return false;
+  };
+  JsonWalk('$', vSchema, visitor);
+
+  for (const vProp of vProperties) {
+    const { path, value } = vProp;
+    set(vSchema, path, value);
+  }
+
+  return vSchema;
 }
