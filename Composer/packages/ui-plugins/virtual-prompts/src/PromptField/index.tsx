@@ -41,6 +41,19 @@ const PromptField: React.FC<FieldProps> = props => {
     return fieldSchema;
   };
 
+  const getvalue = field => {
+    let value;
+    if (LGTemplateFields.includes(field)) {
+      value = get(props.value, [VirtualLGPropName, field]);
+    } else if (LUIntentFields.includes(field)) {
+      value = get(props.value, [VirtualLUPropName, 'body']);
+    } else {
+      value = get(props.value, field);
+    }
+    // console.log(field, value);
+    return value;
+  };
+
   const getError = field => {
     if (typeof props.rawErrors === 'object') {
       return props.rawErrors[field];
@@ -58,7 +71,6 @@ const PromptField: React.FC<FieldProps> = props => {
     } else {
       newData = { ...newData, [field]: data };
     }
-    console.log(newData);
     props.onChange(newData);
   };
 
@@ -72,10 +84,10 @@ const PromptField: React.FC<FieldProps> = props => {
     <div>
       <Pivot linkSize={PivotLinkSize.large} selectedKey={focusedTab} styles={tabs} onLinkClick={handleTabChange}>
         <PivotItem headerText={formatMessage('Bot Asks')} itemKey={PromptTab.BOT_ASKS}>
-          <BotAsks {...props} getError={getError} getSchema={getSchema} onChange={updateField} />
+          <BotAsks {...props} getValue={getvalue} getError={getError} getSchema={getSchema} onChange={updateField} />
         </PivotItem>
         <PivotItem headerText={formatMessage('User Input')} itemKey={PromptTab.USER_INPUT}>
-          <UserInput {...props} getError={getError} getSchema={getSchema} onChange={updateField} />
+          <UserInput {...props} getValue={getvalue} getError={getError} getSchema={getSchema} onChange={updateField} />
         </PivotItem>
         <PivotItem headerText={formatMessage('Other')} itemKey={PromptTab.OTHER}>
           {OTHER_FIELDS.filter(f => getSchema(f)).map(f => (
@@ -88,7 +100,7 @@ const PromptField: React.FC<FieldProps> = props => {
               rawErrors={getError(f)}
               schema={getSchema(f)}
               uiOptions={props.uiOptions.properties?.[f] || {}}
-              value={props.value?.[f]}
+              value={getvalue(f)}
               onChange={updateField(f)}
             />
           ))}

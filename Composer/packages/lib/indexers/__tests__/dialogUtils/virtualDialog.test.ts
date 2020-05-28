@@ -41,8 +41,7 @@ describe('Virtual Schema Convert', () => {
     const schema1 = VirtualSchemaConverter(schema);
     expect(get(schema1, ['definitions', SDKKinds.VirtualLG, 'title'])).toEqual('Virtual LG');
     const askWithVirtual = get(schema1, ['definitions', SDKKinds.Ask, 'properties', VirtualLGPropName]);
-    expect(Object.keys(askWithVirtual).length).toEqual(1);
-    expect(get(askWithVirtual, 'activity.$kind')).toEqual(SDKKinds.VirtualTemplateString);
+    expect(get(askWithVirtual, 'properties.activity.$kind')).toEqual(SDKKinds.IActivityTemplate);
   });
 });
 
@@ -82,6 +81,7 @@ describe('Virtual Dialog Resources Changes', () => {
     const insert1 = [
       { path: `triggers[0].actions[0].actions[0].actions[0].${VirtualLGPropName}.activity`, value: '- updated!' },
       { path: `triggers[6].actions[0].${VirtualLGPropName}.prompt`, value: '- propmpt updated!' },
+      { path: `triggers[6].actions[0].${VirtualLUPropName}.body`, value: '- lu body updated!' },
     ];
 
     const vdialog2 = JsonSet(vdialog1, insert1);
@@ -94,7 +94,9 @@ describe('Virtual Dialog Resources Changes', () => {
     expect(changes.lg.updates[0].body).toEqual('- updated!');
     expect(changes.lg.updates[1].name).toEqual('ConfirmInput_Prompt_107784');
     expect(changes.lg.updates[1].body).toEqual('- propmpt updated!');
-    expect(changes.lu.updates.length).toEqual(0);
+    expect(changes.lu.updates.length).toEqual(1);
+    expect(changes.lu.updates[0].Name).toEqual('ConfirmInput_Response_107784');
+    expect(changes.lu.updates[0].Body).toEqual('- lu body updated!');
     expect(changes.lu.adds.length).toEqual(0);
     expect(changes.lu.deletes.length).toEqual(0);
   });

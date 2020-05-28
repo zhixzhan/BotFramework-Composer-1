@@ -159,7 +159,13 @@ export function updateIntent(content: string, intentName: string, intent: LuInte
     return new sectionOperator(resource).addSection(['', targetSectionContent].join(NEWLINE)).Content;
   }
 }
-
+export function updateIntents(content: string, intents: LuIntentSection[]): string {
+  let newContent = content;
+  intents.forEach(intent => {
+    newContent = updateIntent(newContent, intent.Name, intent);
+  });
+  return newContent;
+}
 /**
  *
  * @param content origin lu file content

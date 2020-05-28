@@ -31,7 +31,7 @@ const expectedResponsesPlaceholder = () =>
 `);
 
 const UserInput: React.FC<PromptFieldProps<MicrosoftInputDialog>> = props => {
-  const { onChange, getSchema, value, id, uiOptions, getError, definitions, depth, schema = {} } = props;
+  const { onChange, getSchema, getValue, value, id, uiOptions, getError, definitions, depth, schema = {} } = props;
   const { currentDialog, designerId } = useShellApi();
   const { recognizers } = usePluginConfig();
 
@@ -52,7 +52,7 @@ const UserInput: React.FC<PromptFieldProps<MicrosoftInputDialog>> = props => {
         rawErrors={getError('property')}
         schema={getSchema('property')}
         uiOptions={uiOptions.properties?.property || {}}
-        value={value?.property}
+        value={getValue('property')}
         onChange={onChange('property')}
       />
       {getSchema('outputFormat') && (
@@ -64,7 +64,7 @@ const UserInput: React.FC<PromptFieldProps<MicrosoftInputDialog>> = props => {
           rawErrors={getError('outputFormat')}
           schema={getSchema('outputFormat')}
           uiOptions={uiOptions.properties?.outputFormat || {}}
-          value={value?.outputFormat}
+          value={getValue('outputFormat')}
           onChange={onChange('outputFormat')}
         />
       )}
@@ -76,13 +76,18 @@ const UserInput: React.FC<PromptFieldProps<MicrosoftInputDialog>> = props => {
         rawErrors={getError('value')}
         schema={getSchema('value')}
         uiOptions={uiOptions.properties?.value || {}}
-        value={value?.value}
+        value={getValue('value')}
         onChange={onChange('value')}
       />
       {Editor && $kind !== SDKKinds.AttachmentInput && (
         <React.Fragment>
           <FieldLabel id={`${id}.intent`} label={intentLabel} />
-          <Editor {...props} placeholder={expectedResponsesPlaceholder()} onChange={onChange('intent')} />
+          <Editor
+            {...props}
+            value={getValue('intent')}
+            placeholder={expectedResponsesPlaceholder()}
+            onChange={onChange('intent')}
+          />
         </React.Fragment>
       )}
       {getSchema('defaultLocale') && (

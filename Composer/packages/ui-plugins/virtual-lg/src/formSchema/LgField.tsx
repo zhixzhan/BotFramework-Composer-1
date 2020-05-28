@@ -37,9 +37,6 @@ const LgField: React.FC<FieldProps<string>> = props => {
   const { designerId, currentDialog, lgFiles, shellApi, projectId, locale, userSettings, data } = useShellApi();
   const lgBody = value || getInitialTemplate(name, value);
 
-  console.log('value', value);
-  console.log('data', data);
-
   let lgType = name;
   const $kind = data?.$kind;
   if ($kind) {

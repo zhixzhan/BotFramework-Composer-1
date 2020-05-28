@@ -4,6 +4,8 @@
 import has from 'lodash/has';
 import get from 'lodash/get';
 import set from 'lodash/set';
+import isEqual from 'lodash/isEqual';
+import differenceWith from 'lodash/differenceWith';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   extractLgTemplateRefs,
@@ -26,6 +28,17 @@ export const VirtualLGPropName = '_virtual_lg';
 export const VirtualLUPropName = '_virtual_lu';
 
 const LGTemplateFields = ['prompt', 'unrecognizedPrompt', 'invalidPrompt', 'defaultValueResponse', 'activity']; // fields may contains lg
+const LUIntentFields = ['intent']; // fields may contains lu
+const LUSDKKinds = [
+  SDKKinds.OnIntent,
+  SDKKinds.ConfirmInput,
+  SDKKinds.AttachmentInput,
+  SDKKinds.ChoiceInput,
+  SDKKinds.ConfirmInput,
+  SDKKinds.DateTimeInput,
+  SDKKinds.NumberInput,
+  SDKKinds.TextInput,
+];
 
 export const getVirtualLuis = (data): LuIntentSection => {
   const { name: Name, body: Body } = get(data, VirtualLUPropName, {});
@@ -69,7 +82,7 @@ const getContainsLuName = (data): string | undefined => {
 
   if ($kind === SDKKinds.OnIntent) {
     return data.intent;
-  } else if ($kind === SDKKinds.TextInput) {
+  } else if (LUSDKKinds.includes($kind)) {
     const relatedLuIntentType = new LuType($kind).toString();
     return new LuMetaData(relatedLuIntentType, designerId).toString();
   }
@@ -168,8 +181,12 @@ export function DialogResourceChanges(dialog1, dialog2): IResourceChanges {
   }
 
   const { adds, deletes, updates } = DialogDiff(dialog1, dialog2);
+  console.log(adds, deletes, updates);
   for (const item of updates) {
-    const { lg, lu } = VirtualDialogResource(item.value);
+    const { lg: prevLg, lu: prevLu } = VirtualDialogResource(item.preValue);
+    const { lg: currLg, lu: currLu } = VirtualDialogResource(item.value);
+    const lg = differenceWith(currLg, prevLg, isEqual);
+    const lu = differenceWith(currLu, prevLu, isEqual);
     changes.lg.updates.push(...lg);
     changes.lu.updates.push(...lu);
   }
@@ -240,7 +257,7 @@ export function DialogConverter(
         });
       }
 
-      if (luFile && [SDKKinds.OnIntent, SDKKinds.TextInput].includes($kind)) {
+      if (luFile && LUSDKKinds.includes($kind)) {
         const luName = getContainsLuName(value);
         const luBody = luFile && luName && luFile.intents.find(t => t.Name === luName)?.Body; // else find in trigger
         setVirtualLuis(value, luName, luBody);
@@ -274,12 +291,6 @@ export function DialogConverterReverse(dialog: {
   return vDialog;
 }
 
-// const VirtualTemplateString = {
-//   title: 'Virtual Template String',
-//   description: '',
-//   $role: 'interface',
-//   type: 'string',
-// };
 const VirtualLG = {
   title: 'Virtual LG',
   description: '',
@@ -308,8 +319,8 @@ export function VirtualSchemaConverter(schema: {
     // extend sdk schema properties with virtual properties
     const properties = get(value, 'properties');
     if (properties && typeof properties === 'object') {
-      const virtualLg = {};
-      const virtualLu = {};
+      const virtualLg: any = {};
+      const virtualLu: any = {};
       const path = _path
         .replace(/^\$\.?/, '')
         .split(/[\[\]]/)
@@ -319,6 +330,11 @@ export function VirtualSchemaConverter(schema: {
 
         if (LGTemplateFields.includes(propName)) {
           virtualLg[propName] = propValue;
+        }
+
+        if (LUIntentFields.includes(propName)) {
+          virtualLu.name = { type: 'string', title: 'virtual lu name' };
+          virtualLu.body = { type: 'string', title: 'virtual lu body' };
         }
       }
 

@@ -48,7 +48,6 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
   const dialogFile = dialogs.find(f => f.id === id);
   const dialogLgFile = lgFiles.find(f => f.id === `${id}.${locale}`);
   const dialogLuFile = luFiles.find(f => f.id === `${id}.${locale}`);
-
   const changes = DialogResourceChanges(prevContent, content);
 
   console.log('Reducer changes: ', changes);
@@ -70,6 +69,7 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
   if (dialogLuFile) {
     let newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
     newContent = luUtil.addIntents(newContent, changes.lu.adds);
+    newContent = luUtil.updateIntents(newContent, changes.lu.updates);
     if (newContent !== dialogLuFile.content) {
       const { intents, diagnostics } = (await LuWorker.parse(dialogLuFile.id, newContent)) as LuFile;
       newLuFile = { id: dialogLuFile.id, content: newContent, intents, diagnostics };

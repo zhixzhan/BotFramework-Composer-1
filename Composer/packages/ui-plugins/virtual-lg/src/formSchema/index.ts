@@ -5,8 +5,7 @@
 import { UISchema } from '@bfc/extension';
 import { SDKKinds } from '@bfc/shared';
 
-// import { VirtualField } from './VirtualField';
-import { LgField } from './VirtualField/LgField';
+import { LgField } from './LgField';
 
 const formSchema: UISchema = {
   [SDKKinds.SendActivity]: {

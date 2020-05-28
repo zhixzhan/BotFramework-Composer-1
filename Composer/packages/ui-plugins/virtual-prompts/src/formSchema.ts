@@ -77,6 +77,14 @@ const formSchema: UISchema = {
         label: () => formatMessage('Confirm Choices'),
         ...choiceSchema,
       },
+      // _virtual_lg: {
+      //   order: ['prompt', '*'],
+      //   properties: {
+      //     prompt: {
+      //       label: () => formatMessage('Prompt for confirmation vir'),
+      //     },
+      //   },
+      // },
     },
   },
   [SDKKinds.DateTimeInput]: {
