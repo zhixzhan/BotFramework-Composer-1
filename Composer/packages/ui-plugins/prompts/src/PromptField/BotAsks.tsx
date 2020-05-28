@@ -12,15 +12,15 @@ const BotAsks: React.FC<PromptFieldProps<MicrosoftInputDialog>> = props => {
 
   return (
     <SchemaField
-      definitions={definitions}
-      depth={depth}
       id={`${id}.prompt`}
       name="prompt"
-      rawErrors={getError('prompt')}
+      definitions={definitions}
+      depth={depth}
+      value={value?.prompt}
       schema={getSchema('prompt')}
       uiOptions={uiOptions.properties?.prompt || {}}
-      value={value?.prompt}
       onChange={onChange('prompt')}
+      rawErrors={getError('prompt')}
     />
   );
 };

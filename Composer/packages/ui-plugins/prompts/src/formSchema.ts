@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import { UISchema, UIOptions } from '@bfc/extension';
@@ -63,11 +62,9 @@ const formSchema: UISchema = {
   [SDKKinds.ConfirmInput]: {
     field: PromptField,
     helpLink: 'https://aka.ms/bfc-ask-for-user-input',
-    hidden: ['prompt'],
-    order: ['_virtual_lg', '*'],
     properties: {
       prompt: {
-        label: () => formatMessage('Prompt for confirmation s'),
+        label: () => formatMessage('Prompt for confirmation'),
       },
       validations: {
         label: () => formatMessage('Validation Rules'),
