@@ -181,7 +181,6 @@ export function DialogResourceChanges(dialog1, dialog2): IResourceChanges {
   }
 
   const { adds, deletes, updates } = DialogDiff(dialog1, dialog2);
-  console.log(adds, deletes, updates);
   for (const item of updates) {
     const { lg: prevLg, lu: prevLu } = VirtualDialogResource(item.preValue);
     const { lg: currLg, lu: currLu } = VirtualDialogResource(item.value);

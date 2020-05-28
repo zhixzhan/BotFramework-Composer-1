@@ -13,27 +13,24 @@ const config: PluginConfig = {
   formSchema: {
     [SDKKinds.OnIntent]: {
       label: () => formatMessage('Intent recognized vir'),
-
-      helpLink: 'https://aka.ms/bfc-ask-for-user-input',
       order: ['_virtual_lu', 'condition', 'entities', '*'],
       hidden: ['actions', 'intent'],
-      properties: {
-        _virtual_lu: {
-          label: () => formatMessage('Trigger phrases (intent: '),
-          // field: LuisIntentEditor,
-          // order: ['body'],
-          // hidden: ['name'],
-          // properties: {
-          //   body: {
-          //     // label: 'intent vir',
-          //     field: LuisIntentEditor,
-          //   },
-          // },
-        },
-      },
+      // properties: {
+      //   _virtual_lu: {
+      //     label: () => formatMessage('Trigger phrases (intent: '),
+      //     // field: LuisIntentEditor,
+      //     // order: ['body'],
+      //     // hidden: ['name'],
+      //     // properties: {
+      //     //   body: {
+      //     //     // label: 'intent vir',
+      //     //     field: LuisIntentEditor,
+      //     //   },
+      //     // },
+      //   },
+      // },
     },
     [SDKKinds.VirtualLU]: {
-      label: () => formatMessage('Trigger phrases (intent: '),
       field: VirtualLUField,
     },
   },

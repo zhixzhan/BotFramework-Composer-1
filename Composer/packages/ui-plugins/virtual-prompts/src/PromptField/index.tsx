@@ -50,7 +50,6 @@ const PromptField: React.FC<FieldProps> = props => {
     } else {
       value = get(props.value, field);
     }
-    // console.log(field, value);
     return value;
   };
 

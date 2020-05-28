@@ -15,8 +15,7 @@ const LuisIntentEditor: React.FC<FieldProps<string>> = props => {
   const { currentDialog, luFiles, shellApi, locale, projectId, userSettings, data } = useShellApi();
   const luFile = luFiles.find(f => f.id === `${currentDialog.id}.${locale}`);
 
-  console.log(props);
-  console.log(data);
+  // console.log(data);
   /**
    * if props.value is string, it means luName, used by `Trigger phrases` input
    * if props.value is object, it means current dialog item, used by `TextInput`
