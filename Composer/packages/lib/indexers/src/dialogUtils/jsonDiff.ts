@@ -55,6 +55,17 @@ export function hasWithJsonPath(json, path) {
   return result.length !== 0;
 }
 
+export function jsonPathParrent(path: string): string {
+  if (path === JsonPathStart) return path;
+  if (path.endsWith(']')) {
+    const endIdx = path.lastIndexOf('[');
+    return path.slice(0, endIdx);
+  } else {
+    const endIdx = path.lastIndexOf('.');
+    return path.slice(0, endIdx);
+  }
+}
+
 /**
  *
  * @param json1

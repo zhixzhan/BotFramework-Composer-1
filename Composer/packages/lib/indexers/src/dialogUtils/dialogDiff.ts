@@ -8,7 +8,7 @@
 import has from 'lodash/has';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
-import intersection from 'lodash/intersection';
+import uniqWith from 'lodash/uniqWith';
 import { SDKKinds } from '@bfc/shared';
 
 import {
@@ -23,6 +23,8 @@ import {
   defualtJSONStopComparison,
   getWithJsonPath,
   hasWithJsonPath,
+  jsonPathParrent,
+  JsonPathStart,
 } from './jsonDiff';
 
 interface DialogObject {
@@ -54,9 +56,44 @@ function isSameKind(value1: DialogObject, value2: DialogObject): boolean {
   return get(value1, '$kind') === get(value2, '$kind');
 }
 
-function isAtomicKind(value1: DialogObject, value2: DialogObject): boolean {
-  const AtomicKinds = [SDKKinds.SendActivity, SDKKinds.TextInput, SDKKinds.ConfirmInput];
-  return intersection([get(value1, '$kind'), get(value2, '$kind')], AtomicKinds).length !== 0;
+function isDialogItem(value): boolean {
+  return has(value, '$kind');
+}
+
+function upwardsFindDialogItem(json, path): { path: string; value: DialogObject } {
+  if (path === JsonPathStart) return { path, value: json };
+  const value = getWithJsonPath(json, path);
+  if (isDialogItem(value)) {
+    return { path, value };
+  } else {
+    return upwardsFindDialogItem(json, jsonPathParrent(path));
+  }
+}
+
+function mergeUpdateChanges(prevJson, currJson, changes: IJSONChangeUpdate[]): IJSONChangeUpdate[] {
+  if (!changes.length) return changes;
+  const mergedChanges = changes.map(item => {
+    if (isDialogItem(item.value)) {
+      return item;
+    } else {
+      const { path, value } = upwardsFindDialogItem(currJson, item.path);
+      const preValue = getWithJsonPath(prevJson, path);
+      return { path, value, preValue };
+    }
+  });
+  return uniqWith(mergedChanges, isEqual);
+}
+
+function mergeChanges(json, changes: IJSONChangeAdd[] | IJSONChangeDelete[]): IJSONChangeAdd[] | IJSONChangeDelete[] {
+  if (!changes.length) return changes;
+  const mergedChanges = changes.map(item => {
+    if (isDialogItem(item.value)) {
+      return item;
+    } else {
+      return upwardsFindDialogItem(json, item.path);
+    }
+  });
+  return uniqWith(mergedChanges, isEqual);
 }
 
 /**
@@ -75,10 +112,7 @@ export const defualtDialogStopComparison: IStopper = (json1: any, json2: any, pa
   const value2 = getWithJsonPath(json2, path);
 
   return (
-    isAtomicKind(value1, value2) ||
-    !isSameKind(value1, value2) ||
-    !isSameDesignerId(value1, value2) ||
-    defualtJSONStopComparison(json1, json2, path)
+    !isSameKind(value1, value2) || !isSameDesignerId(value1, value2) || defualtJSONStopComparison(json1, json2, path)
   );
 };
 
@@ -117,9 +151,12 @@ export function DialogDiffUpdate(prevJson, currJson, comparator?: IComparator): 
 }
 
 export function DialogDiff(prevJson, currJson, comparator?: IComparator): IJsonChanges {
+  const updates = DialogDiffUpdate(prevJson, currJson, comparator);
+  const adds = DialogDiffAdd(prevJson, currJson, comparator);
+  const deletes = DialogDiffDelete(prevJson, currJson, comparator);
   return {
-    adds: DialogDiffAdd(prevJson, currJson, comparator),
-    deletes: DialogDiffDelete(prevJson, currJson, comparator),
-    updates: DialogDiffUpdate(prevJson, currJson, comparator),
+    adds: mergeChanges(currJson, adds),
+    deletes: mergeChanges(currJson, deletes),
+    updates: mergeUpdateChanges(prevJson, currJson, updates),
   };
 }
