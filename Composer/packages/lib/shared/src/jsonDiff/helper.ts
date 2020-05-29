@@ -4,9 +4,6 @@ import get from 'lodash/get';
 import set from 'lodash/set';
 import cloneDeep from 'lodash/cloneDeep';
 import { JSONPath } from 'jsonpath-plus';
-/**
- * Utils
- */
 
 export const JsonPathStart = '$';
 
@@ -15,6 +12,7 @@ export function getWithJsonPath(json, path) {
   const result = JSONPath({ path, json });
   return result.length === 0 ? undefined : result[0];
 }
+
 export function hasWithJsonPath(json, path) {
   if (path === JsonPathStart) return true;
   const result = JSONPath({ path, json });
@@ -23,13 +21,9 @@ export function hasWithJsonPath(json, path) {
 
 export function jsonPathParrent(path: string): string {
   if (path === JsonPathStart) return path;
-  if (path.endsWith(']')) {
-    const endIdx = path.lastIndexOf('[');
-    return path.slice(0, endIdx);
-  } else {
-    const endIdx = path.lastIndexOf('.');
-    return path.slice(0, endIdx);
-  }
+  const splitChar = path.endsWith(']') ? '[' : '.';
+  const splitIdx = path.lastIndexOf(splitChar);
+  return path.slice(0, splitIdx);
 }
 
 export function JsonSet(origin: any, updates: { path: string; value: any }[]) {

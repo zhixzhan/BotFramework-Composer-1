@@ -6,7 +6,7 @@ import fs from 'fs';
 import get from 'lodash/get';
 
 import { DialogDiff } from '../../src/dialogDiff';
-import { JsonInsert, JsonSet } from '../../src/jsonDiff/helper';
+import { JsonInsert, JsonSet } from '../../src/jsonDiff';
 
 const baseDialog = JSON.parse(fs.readFileSync(`${__dirname}/a.dialog`, 'utf-8'));
 

@@ -23,6 +23,7 @@
     "packages/tools/language-servers",
     "packages/tools/language-servers/*",
     "packages/ui-plugins/example",
+    "packages/ui-plugins/expressions",
     "packages/ui-plugins/json",
     "packages/ui-plugins/select-dialog",
     "packages/ui-plugins/select-skill-dialog",

@@ -6,7 +6,7 @@ import path from 'path';
 
 import get from 'lodash/get';
 import { SDKKinds } from '@bfc/shared';
-import { JsonSet, JsonInsert } from '@bfc/shared/lib/jsonDiff/helper';
+import { JsonSet, JsonInsert } from '@bfc/shared';
 
 import { VirtualLGPropName, VirtualLUPropName } from '../../src/virtualDialog/constants';
 import {
