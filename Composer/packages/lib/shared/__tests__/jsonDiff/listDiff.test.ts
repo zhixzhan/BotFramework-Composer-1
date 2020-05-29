@@ -5,8 +5,10 @@ import has from 'lodash/has';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 
-import { JsonInsert, JsonSet, IComparator, IJSONChangeUpdate } from '../../src/jsonDiff';
-import { ListDiff, deconstructChangesInListUpdateChanges } from '../../src/jsonDiff/listDiff';
+import { IComparator, IJSONChangeUpdate } from '../../src/jsonDiff/types';
+import { JsonSet, JsonInsert } from '../../src/jsonDiff/helper';
+import { ListDiff } from '../../src/jsonDiff/listDiff';
+import { deConstructChangesInListUpdateChanges } from '../../src/jsonDiff/deConstructChangesInListUpdateChanges';
 
 describe('list diff basic function', () => {
   it('should deconstruct changes', () => {
@@ -18,7 +20,7 @@ describe('list diff basic function', () => {
       },
     ];
 
-    const dechanges1 = deconstructChangesInListUpdateChanges(changes1);
+    const dechanges1 = deConstructChangesInListUpdateChanges(changes1);
     expect(dechanges1.updates.length).toEqual(1);
     expect(dechanges1.updates).toEqual(changes1);
     expect(dechanges1.adds.length).toEqual(0);
@@ -49,7 +51,7 @@ describe('list diff basic function', () => {
       },
     ];
 
-    const dechanges2 = deconstructChangesInListUpdateChanges(changes2);
+    const dechanges2 = deConstructChangesInListUpdateChanges(changes2);
     expect(dechanges2.adds.length).toEqual(0);
     expect(dechanges2.deletes.length).toEqual(0);
     expect(dechanges2.updates.length).toEqual(2);
@@ -73,7 +75,7 @@ describe('list diff basic function', () => {
       },
     ];
 
-    const dechanges3 = deconstructChangesInListUpdateChanges(changes3);
+    const dechanges3 = deConstructChangesInListUpdateChanges(changes3);
     expect(dechanges3.updates.length).toEqual(0);
     expect(dechanges3.adds.length).toEqual(0);
     expect(dechanges3.deletes.length).toEqual(1);
@@ -94,7 +96,7 @@ describe('list diff basic function', () => {
       },
     ];
 
-    const dechanges4 = deconstructChangesInListUpdateChanges(changes4);
+    const dechanges4 = deConstructChangesInListUpdateChanges(changes4);
     expect(dechanges4.updates.length).toEqual(1);
     expect(dechanges4.adds.length).toEqual(1);
     expect(dechanges4.deletes.length).toEqual(0);
@@ -115,7 +117,7 @@ describe('list diff basic function', () => {
       },
     ];
 
-    const dechanges5 = deconstructChangesInListUpdateChanges(changes5);
+    const dechanges5 = deConstructChangesInListUpdateChanges(changes5);
     expect(dechanges5.updates.length).toEqual(1);
     expect(dechanges5.adds.length).toEqual(0);
     expect(dechanges5.deletes.length).toEqual(0);

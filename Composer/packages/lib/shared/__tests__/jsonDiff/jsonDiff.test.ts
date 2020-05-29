@@ -3,16 +3,9 @@
 import isEqual from 'lodash/isEqual';
 import get from 'lodash/get';
 
-import {
-  JsonDiff,
-  IComparator,
-  getWithJsonPath,
-  hasWithJsonPath,
-  JsonSet,
-  JsonInsert,
-  defaultJSONComparator,
-  defualtJSONStopComparison,
-} from '../../src/jsonDiff';
+import { JsonDiff, defaultJSONComparator, defualtJSONStopComparison } from '../../src/jsonDiff';
+import { IComparator } from '../../src/jsonDiff/types';
+import { getWithJsonPath, hasWithJsonPath, JsonSet, JsonInsert } from '../../src/jsonDiff/helper';
 
 describe('json diff check comparators', () => {
   it('defualtJSONStopComparison', () => {

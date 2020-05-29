@@ -4,67 +4,11 @@
 import isEqual from 'lodash/isEqual';
 import intersectionBy from 'lodash/intersectionBy';
 import differenceWith from 'lodash/differenceWith';
-// import xorWith from 'lodash/xorWith';
 import indexOf from 'lodash/indexOf';
-// import pullAllWith from 'lodash/pullAllWith';
 
-import { IJsonChanges, IComparator, JsonDiff, IJSONChangeUpdate, defualtJSONStopComparison } from '../jsonDiff';
+import { IJsonChanges, IComparator } from '../jsonDiff/types';
 
-// updates in N level list, may be an add/delete/update in N+1 level
-// continue walk in current list.
-export function deconstructChangesInListUpdateChanges(
-  updates: IJSONChangeUpdate[],
-  comparator?: IComparator
-): IJsonChanges {
-  const results: IJsonChanges = {
-    adds: [],
-    deletes: [],
-    updates: [],
-  };
-
-  const fixedUpdates: IJSONChangeUpdate[] = [];
-  for (let index = 0; index < updates.length; index++) {
-    const item = updates[index];
-    const { preValue, value } = item;
-    if (comparator ? comparator(preValue, value, '$').isStop : defualtJSONStopComparison(preValue, value, '$')) {
-      // it's an end level change, no need to walk in.
-      fixedUpdates.push(item);
-      continue;
-    }
-
-    const changes = JsonDiff(preValue, value, comparator);
-
-    // // if real change happens in low level, pull it out
-    // if (changes.adds.length || changes.deletes.length || changes.updates.length) {
-    //   fixedUpdates.splice(index, 1);
-    // }
-
-    // contine walk in
-    const changesInUpdates = deconstructChangesInListUpdateChanges(changes.updates, comparator);
-
-    const adds = [...changes.adds, ...changesInUpdates.adds].map(subItem => {
-      subItem.path = `${item.path}${subItem.path.replace(/^\$/, '')}`;
-      return subItem;
-    });
-    const deletes = [...changes.deletes, ...changesInUpdates.deletes].map(subItem => {
-      subItem.path = `${item.path}${subItem.path.replace(/^\$/, '')}`;
-      return subItem;
-    });
-
-    const updates2 = changesInUpdates.updates.map(subItem => {
-      subItem.path = `${item.path}${subItem.path.replace(/^\$/, '')}`;
-      return subItem;
-    });
-
-    results.adds.push(...adds);
-    results.deletes.push(...deletes);
-    fixedUpdates.push(...updates2);
-  }
-
-  results.updates = fixedUpdates;
-
-  return results;
-}
+import { deConstructChangesInListUpdateChanges } from './deConstructChangesInListUpdateChanges';
 
 /**
  * diff with listItem's change
@@ -144,7 +88,7 @@ export function ListDiff(list1: any[], list2: any[], comparator?: IComparator): 
     };
   });
 
-  const changesInUpdates = deconstructChangesInListUpdateChanges(updates, comparator);
+  const changesInUpdates = deConstructChangesInListUpdateChanges(updates, comparator);
 
   return {
     adds: adds.concat(changesInUpdates.adds),

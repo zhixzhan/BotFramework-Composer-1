@@ -5,16 +5,16 @@ import fs from 'fs';
 import path from 'path';
 
 import get from 'lodash/get';
-import { SDKKinds, JsonSet, JsonInsert } from '@bfc/shared';
+import { SDKKinds } from '@bfc/shared';
+import { JsonSet, JsonInsert } from '@bfc/shared/lib/jsonDiff/helper';
 
+import { VirtualLGPropName, VirtualLUPropName } from '../../src/virtualDialog/constants';
 import {
-  DialogConverter,
-  DialogConverterReverse,
-  DialogResourceChanges,
+  VirtualDialogConverter,
+  VirtualDialogConverterReverse,
+  VirtualDialogResourceChanges,
   VirtualDialogResource,
   VirtualSchemaConverter,
-  VirtualLGPropName,
-  VirtualLUPropName,
 } from '../../src/virtualDialog';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
@@ -53,7 +53,7 @@ describe('Virtual Schema Convert', () => {
 
 describe('Virtual Dialog Convert', () => {
   it('should convert dialog -> virtual dialog (with luis recognizer)', () => {
-    const convertedDialog = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const convertedDialog = VirtualDialogConverter(dialogFile, lgFileResolver, luFileResolver);
 
     expect(get(convertedDialog, 'triggers[0].actions[0].actions[0].actions[0].activity')).toEqual(
       '${SendActivity_202664()}'
@@ -75,7 +75,7 @@ describe('Virtual Dialog Convert', () => {
   });
 
   it('should convert dialog -> virtual dialog (with regexp recognizer)', () => {
-    const convertedDialog = DialogConverter(dialogFile2, lgFileResolver, luFileResolver);
+    const convertedDialog = VirtualDialogConverter(dialogFile2, lgFileResolver, luFileResolver);
     const intents = get(convertedDialog, 'recognizer.intents');
 
     const vItem = get(convertedDialog, `triggers[1].${VirtualLUPropName}`);
@@ -85,15 +85,15 @@ describe('Virtual Dialog Convert', () => {
   });
 
   it('should convert virtual dialog -> dialog', () => {
-    const convertedDialog = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
-    const reverseConvertedDialog = DialogConverterReverse(convertedDialog);
+    const convertedDialog = VirtualDialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const reverseConvertedDialog = VirtualDialogConverterReverse(convertedDialog);
     expect(reverseConvertedDialog).toEqual(dialogFile);
   });
 });
 
 describe('Virtual Dialog Resources Changes', () => {
   it('update by virtual property', () => {
-    const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const vdialog1 = VirtualDialogConverter(dialogFile, lgFileResolver, luFileResolver);
     const insert1 = [
       { path: `triggers[0].actions[0].actions[0].actions[0].${VirtualLGPropName}.activity`, value: '- updated!' },
       { path: `triggers[6].actions[0].${VirtualLGPropName}.prompt`, value: '- propmpt updated!' },
@@ -102,7 +102,7 @@ describe('Virtual Dialog Resources Changes', () => {
 
     const vdialog2 = JsonSet(vdialog1, insert1);
 
-    const changes = DialogResourceChanges(vdialog1, vdialog2);
+    const changes = VirtualDialogResourceChanges(vdialog1, vdialog2);
     expect(changes.lg.updates.length).toEqual(2);
     expect(changes.lg.adds.length).toEqual(0);
     expect(changes.lg.deletes.length).toEqual(0);
@@ -118,7 +118,7 @@ describe('Virtual Dialog Resources Changes', () => {
   });
 
   it('add by virtual property', () => {
-    const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const vdialog1 = VirtualDialogConverter(dialogFile, lgFileResolver, luFileResolver);
     const insert1 = [
       {
         path: 'triggers[6].actions[0]',
@@ -137,7 +137,7 @@ describe('Virtual Dialog Resources Changes', () => {
 
     const vdialog2 = JsonInsert(vdialog1, insert1);
 
-    const changes = DialogResourceChanges(vdialog1, vdialog2);
+    const changes = VirtualDialogResourceChanges(vdialog1, vdialog2);
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(1);
     expect(changes.lg.deletes.length).toEqual(0);
@@ -149,7 +149,7 @@ describe('Virtual Dialog Resources Changes', () => {
   });
 
   it('add an intent', () => {
-    const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const vdialog1 = VirtualDialogConverter(dialogFile, lgFileResolver, luFileResolver);
     const insert1 = [
       {
         path: 'triggers[7]',
@@ -181,7 +181,7 @@ describe('Virtual Dialog Resources Changes', () => {
 
     const vdialog2 = JsonInsert(vdialog1, insert1);
 
-    const changes = DialogResourceChanges(vdialog1, vdialog2);
+    const changes = VirtualDialogResourceChanges(vdialog1, vdialog2);
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(1);
     expect(changes.lg.deletes.length).toEqual(0);
@@ -191,7 +191,7 @@ describe('Virtual Dialog Resources Changes', () => {
   });
 
   it('copy a TextInput', () => {
-    const vdialog1 = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
+    const vdialog1 = VirtualDialogConverter(dialogFile, lgFileResolver, luFileResolver);
     const insert1 = [
       {
         path: 'triggers[6].actions[0]',
@@ -224,7 +224,7 @@ describe('Virtual Dialog Resources Changes', () => {
 
     const vdialog2 = JsonInsert(vdialog1, insert1);
 
-    const changes = DialogResourceChanges(vdialog1, vdialog2);
+    const changes = VirtualDialogResourceChanges(vdialog1, vdialog2);
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(4);
     expect(changes.lg.deletes.length).toEqual(0);
