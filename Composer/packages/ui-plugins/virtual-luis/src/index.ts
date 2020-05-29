@@ -7,7 +7,8 @@ import { SDKKinds } from '@bfc/shared';
 import formatMessage from 'format-message';
 
 import { LuisIntentEditor } from './LuisIntentEditor';
-import { VirtualLUField } from './VirtualLUField';
+import { RegexIntentField } from './RegexIntentField';
+import { IntentField } from './IntentField';
 
 const config: PluginConfig = {
   formSchema: {
@@ -31,7 +32,7 @@ const config: PluginConfig = {
       // },
     },
     [SDKKinds.VirtualLU]: {
-      field: VirtualLUField,
+      field: IntentField,
     },
   },
   recognizers: [
@@ -52,6 +53,17 @@ const config: PluginConfig = {
         } else {
           alert(`NO LU FILE WITH NAME ${currentDialog.id}`);
         }
+      },
+    },
+    {
+      id: SDKKinds.RegexRecognizer,
+      displayName: () => formatMessage('Regular Expression'),
+      editor: RegexIntentField,
+      isSelected: data => {
+        return typeof data === 'object' && data.$kind === SDKKinds.RegexRecognizer;
+      },
+      handleRecognizerChange: props => {
+        props.onChange({ $kind: SDKKinds.RegexRecognizer, intents: [] });
       },
     },
   ],

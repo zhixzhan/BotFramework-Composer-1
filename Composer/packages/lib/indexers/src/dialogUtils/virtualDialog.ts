@@ -99,6 +99,19 @@ const serilizeLgRefByDesignerId = value => {
   }
 };
 
+const recognizerType = (dialog: any): string | null => {
+  const { recognizer } = dialog;
+
+  if (recognizer) {
+    if (typeof recognizer === 'object' && recognizer.$kind === SDKKinds.RegexRecognizer) {
+      return SDKKinds.RegexRecognizer;
+    } else if (typeof recognizer === 'string') {
+      return SDKKinds.LuisRecognizer;
+    }
+  }
+  return null;
+};
+
 export function VirtualDialogResource(
   dialog
 ): {
@@ -214,21 +227,31 @@ export function DialogConverter(
 ): {
   [key: string]: any;
 } {
-  const luFileName = typeof dialog.recognizer === 'string' ? dialog.recognizer : '';
   const lgFileName = typeof dialog.generator === 'string' ? dialog.generator : '';
-  const luFileId = getBaseName(luFileName, '.lu');
   const lgFileId = getBaseName(lgFileName, '.lg');
+  const lgTemplates = lgFileResolver(lgFileId)?.templates;
 
-  const lgFile = lgFileResolver(lgFileId);
-  const luFile = luFileResolver(luFileId);
+  let luIntents;
+
+  const intentType = recognizerType(dialog);
+  if (intentType === SDKKinds.RegexRecognizer) {
+    luIntents = dialog?.recognizer?.intents.map(({ intent, pattern }) => {
+      return {
+        Name: intent,
+        Body: pattern,
+      };
+    });
+  } else if (intentType === SDKKinds.LuisRecognizer) {
+    const luFileName = typeof dialog.recognizer === 'string' ? dialog.recognizer : '';
+    const luFileId = getBaseName(luFileName, '.lu');
+    luIntents = luFileResolver(luFileId)?.intents;
+  }
 
   const vDialog = cloneDeep(dialog);
   const visitor: VisitorFunc = (_path: string, value: any): boolean => {
-    // it's a valid schema dialog node.
     if (has(value, '$kind')) {
       const $kind = value.$kind;
-      if (lgFile) {
-        // find lg templates in [prop], add _virtial_[prop]
+      if (lgTemplates) {
         LGTemplateFields.forEach(field => {
           if (has(value, field)) {
             const propValue = value[field];
@@ -246,7 +269,7 @@ export function DialogConverter(
               lgName = lgTemplateRef[0].name;
             }
 
-            const lgTemplate = lgFile.templates.find(t => t.name === lgName);
+            const lgTemplate = lgTemplates.find(t => t.name === lgName);
             // refered lg is in same name lg File.
             if (lgTemplate) {
               vPropValue = lgTemplate.body;
@@ -256,9 +279,9 @@ export function DialogConverter(
         });
       }
 
-      if (luFile && LUSDKKinds.includes($kind)) {
+      if (luIntents && LUSDKKinds.includes($kind)) {
         const luName = getContainsLuName(value);
-        const luBody = luFile && luName && luFile.intents.find(t => t.Name === luName)?.Body; // else find in trigger
+        const luBody = luIntents && luName && luIntents.find(t => t.Name === luName)?.Body; // else find in trigger
         setVirtualLuis(value, luName, luBody);
       }
     }

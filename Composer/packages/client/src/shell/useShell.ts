@@ -6,14 +6,12 @@ import { ShellApi, ShellData } from '@bfc/shared';
 import isEqual from 'lodash/isEqual';
 import get from 'lodash/get';
 
-import { updateRegExIntent } from '../utils/dialogUtil';
 import { StoreContext } from '../store';
 import { getDialogData, setDialogData, sanitizeDialogData } from '../utils';
 import { OpenAlertModal, DialogStyle } from '../components/Modal';
 import { getFocusPath } from '../utils/navigation';
 import { isAbsHosted } from '../utils/envUtil';
 
-import { useLuApi } from './luApi';
 import { useVirtualDialog, useVirtualSchema } from './useVirtualDialog';
 
 const FORM_EDITOR = 'PropertyEditor';
@@ -37,20 +35,12 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
     userSettings,
     skills,
   } = state;
-  const luApi = useLuApi();
   const updateDialog = actions.updateDialog;
   const updateVirtualDialog = actions.updateVirtualDialog;
 
   const { dialogId, selected, focused, promptTab } = designPageLocation;
   const dialogsMap = useVirtualDialog();
   const vSchemas = useVirtualSchema();
-
-  async function updateRegExIntentHandler(id, intentName, pattern) {
-    const dialog = dialogs.find(dialog => dialog.id === id);
-    if (!dialog) throw new Error(`dialog ${dialogId} not found`);
-    const newDialog = updateRegExIntent(dialog, intentName, pattern);
-    return await updateDialog({ id, content: newDialog.content });
-  }
 
   function cleanData() {
     const dialog = dialogs.find(dialog => dialog.id === dialogId)?.content;
@@ -143,8 +133,6 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
         actions.navTo(dialogId);
       }
     },
-    ...luApi,
-    updateRegExIntent: updateRegExIntentHandler,
     navTo,
     onFocusEvent: focusEvent,
     onFocusSteps: focusSteps,

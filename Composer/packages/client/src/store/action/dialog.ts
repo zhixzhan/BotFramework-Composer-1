@@ -3,7 +3,7 @@
 
 import isEqual from 'lodash/isEqual';
 import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
-import { LgFile, LuFile } from '@bfc/shared';
+import { LgFile, LuFile, SDKKinds } from '@bfc/shared';
 import { dialogIndexer } from '@bfc/indexers';
 
 import { ActionCreator, State } from '../types';
@@ -12,6 +12,7 @@ import * as lgUtil from '../../utils/lgUtil';
 import * as luUtil from '../../utils/luUtil';
 import LgWorker from '../parsers/lgWorker';
 import LuWorker from '../parsers/luWorker';
+import { updateRegExIntent, recognizerType } from '../../utils/dialogUtil';
 
 import { ActionTypes } from './../../constants/index';
 import { Store } from './../types';
@@ -66,7 +67,8 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
     }
   }
 
-  if (dialogLuFile) {
+  const luType = recognizerType(dialogFile?.content);
+  if (luType === SDKKinds.LuisRecognizer && dialogLuFile) {
     let newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
     newContent = luUtil.addIntents(newContent, changes.lu.adds);
     newContent = luUtil.updateIntents(newContent, changes.lu.updates);
@@ -74,9 +76,15 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
       const { intents, diagnostics } = (await LuWorker.parse(dialogLuFile.id, newContent)) as LuFile;
       newLuFile = { id: dialogLuFile.id, content: newContent, intents, diagnostics };
     }
+  } else if (luType === SDKKinds.RegexRecognizer && dialogFile) {
+    newDialog = { ...dialogFile };
+    for (const intent of changes.lu.updates) {
+      const { Name, Body: pattern } = intent;
+      newDialog = updateRegExIntent(newDialog, Name, pattern);
+    }
   }
 
-  const newDialogContent = DialogConverterReverse(content);
+  const newDialogContent = DialogConverterReverse(newDialog?.content || content);
   if (dialogFile && !isEqual(newDialogContent, dialogFile.content)) {
     newDialog = { ...dialogFile, ...dialogIndexer.parse(dialogFile.id, newDialogContent, schemas.sdk.content) };
   }

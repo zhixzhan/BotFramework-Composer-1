@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { DialogInfo, LuFile, LgFile, LuIntentSection } from './indexers';
+import { DialogInfo, LuFile, LgFile } from './indexers';
 import { UserSettings } from './settings';
 import { OBISchema } from './schema';
 
@@ -59,8 +59,6 @@ export interface ShellApi {
   onFocusSteps: (stepIds: string[], focusedTab?: string) => void;
   onFocusEvent: (eventId: string) => void;
   onSelect: (ids: string[]) => void;
-  updateLuIntent: (id: string, intentName: string, intent: LuIntentSection) => Promise<void>;
-  updateRegExIntent: (id: string, intentName: string, pattern: string) => void;
   createDialog: (actions: any) => Promise<string | null>;
   addCoachMarkRef: (ref: { [key: string]: any }) => void;
   onCopy: (clipboardActions: any[]) => void;

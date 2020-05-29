@@ -20,7 +20,8 @@ import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 
 const schema = JSON.parse(fs.readFileSync(`${__dirname}/data/schemas/sdk.schema`, 'utf-8'));
-const dialogFile = JSON.parse(fs.readFileSync(`${__dirname}/data/todobotwithluissample.dialog`, 'utf-8'));
+const dialogFile = JSON.parse(fs.readFileSync(`${__dirname}/data/todobotwithluissample.test.dialog`, 'utf-8'));
+const dialogFile2 = JSON.parse(fs.readFileSync(`${__dirname}/data/todobotsample.test.dialog`, 'utf-8'));
 const lgFile = lgIndexer.parse(
   fs.readFileSync(`${__dirname}/data/language-generation/en-us/todobotwithluissample.en-us.lg`, 'utf-8')
 );
@@ -46,7 +47,7 @@ describe('Virtual Schema Convert', () => {
 });
 
 describe('Virtual Dialog Convert', () => {
-  it('should convert dialog -> virtual dialog', () => {
+  it('should convert dialog -> virtual dialog (with luis recognizer)', () => {
     const convertedDialog = DialogConverter(dialogFile, lgFileResolver, luFileResolver);
 
     expect(get(convertedDialog, 'triggers[0].actions[0].actions[0].actions[0].activity')).toEqual(
@@ -66,6 +67,16 @@ describe('Virtual Dialog Convert', () => {
     expect(get(convertedDialog, 'triggers[1].intent')).toEqual('Add');
     expect(vItem4.name).toEqual('Add');
     expect(vItem4.body).toContain('- Add todo');
+  });
+
+  it('should convert dialog -> virtual dialog (with regexp recognizer)', () => {
+    const convertedDialog = DialogConverter(dialogFile2, lgFileResolver, luFileResolver);
+    const intents = get(convertedDialog, 'recognizer.intents');
+
+    const vItem = get(convertedDialog, `triggers[1].${VirtualLUPropName}`);
+    expect(get(convertedDialog, 'triggers[1].intent')).toEqual('AddIntent');
+    expect(vItem.name).toEqual('AddIntent');
+    expect(vItem.body).toEqual(intents.find(({ intent }) => intent === 'AddIntent')?.pattern);
   });
 
   it('should convert virtual dialog -> dialog', () => {

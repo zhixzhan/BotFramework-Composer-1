@@ -8,7 +8,7 @@ import get from 'lodash/get';
 import { DialogDiff } from '../../src/dialogUtils/dialogDiff';
 import { JsonInsert, JsonSet } from '../../src/dialogUtils/jsonDiff';
 
-const baseDialog = JSON.parse(fs.readFileSync(`${__dirname}/data/base.dialog`, 'utf-8'));
+const baseDialog = JSON.parse(fs.readFileSync(`${__dirname}/data/todosample.test.dialog`, 'utf-8'));
 
 describe('dialog diff', () => {
   it('check action adds', () => {
