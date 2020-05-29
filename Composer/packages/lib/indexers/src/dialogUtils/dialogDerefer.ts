@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import has from 'lodash/has';
-import { LgFile, LuFile, importResolverGenerator, extractLgTemplateRefs } from '@bfc/shared';
-
-import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
+import { LgFile, LuFile, importResolverGenerator, extractLgTemplateRefs, JsonWalk, VisitorFunc } from '@bfc/shared';
 
 import { ExtractLGFile } from './extractResources';
 

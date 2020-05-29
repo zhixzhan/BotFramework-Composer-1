@@ -2,11 +2,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import fs from 'fs';
+import path from 'path';
 
 import get from 'lodash/get';
-import { SDKKinds } from '@bfc/shared';
+import { SDKKinds, JsonSet, JsonInsert } from '@bfc/shared';
 
-import { JsonSet, JsonInsert } from '../../src/dialogUtils/jsonDiff';
 import {
   DialogConverter,
   DialogConverterReverse,
@@ -15,18 +15,23 @@ import {
   VirtualSchemaConverter,
   VirtualLGPropName,
   VirtualLUPropName,
-} from '../../src/dialogUtils/virtualDialog';
+} from '../../src/virtualDialog';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 
-const schema = JSON.parse(fs.readFileSync(`${__dirname}/data/schemas/sdk.schema`, 'utf-8'));
-const dialogFile = JSON.parse(fs.readFileSync(`${__dirname}/data/todobotwithluissample.test.dialog`, 'utf-8'));
-const dialogFile2 = JSON.parse(fs.readFileSync(`${__dirname}/data/todobotsample.test.dialog`, 'utf-8'));
+const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../_data_/schemas/sdk.schema'), 'utf-8'));
+const dialogFile = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../_data_/todobotwithluissample.test.dialog'), 'utf-8')
+);
+const dialogFile2 = JSON.parse(fs.readFileSync(path.join(__dirname, '../_data_/todobotsample.test.dialog'), 'utf-8'));
 const lgFile = lgIndexer.parse(
-  fs.readFileSync(`${__dirname}/data/language-generation/en-us/todobotwithluissample.en-us.lg`, 'utf-8')
+  fs.readFileSync(path.join(__dirname, '../_data_/language-generation/en-us/todobotwithluissample.en-us.lg'), 'utf-8')
 );
 const luFile = luIndexer.parse(
-  fs.readFileSync(`${__dirname}/data/language-understanding/en-us/todobotwithluissample.en-us.lu`, 'utf-8')
+  fs.readFileSync(
+    path.join(__dirname, '../_data_/language-understanding/en-us/todobotwithluissample.en-us.lu'),
+    'utf-8'
+  )
 );
 
 const lgFileResolver = () => {

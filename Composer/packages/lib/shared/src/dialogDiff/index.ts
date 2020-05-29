@@ -9,8 +9,8 @@ import has from 'lodash/has';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 import uniqWith from 'lodash/uniqWith';
-import { SDKKinds } from '@bfc/shared';
 
+import { SDKKinds } from '../index';
 import {
   JsonDiffAdds,
   JsonDiffUpdates,
@@ -25,7 +25,7 @@ import {
   hasWithJsonPath,
   jsonPathParrent,
   JsonPathStart,
-} from './jsonDiff';
+} from '../jsonDiff';
 
 interface DialogObject {
   $kind: SDKKinds;

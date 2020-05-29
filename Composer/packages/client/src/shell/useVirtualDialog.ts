@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 import cloneDeep from 'lodash/cloneDeep';
 import { useContext, useEffect, useState, useMemo } from 'react';
-import { DialogConverter, VirtualSchemaConverter } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
+import { DialogConverter, VirtualSchemaConverter } from '@bfc/indexers';
 
 import { State } from '../store/types';
 import { StoreContext } from '../store';

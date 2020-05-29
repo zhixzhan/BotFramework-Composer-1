@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { JsonWalk, VisitorFunc } from '../../src/utils/jsonWalk';
+import { JsonWalk, VisitorFunc } from '../../src/jsonWalk';
 
 const data = {
   firstName: 'John',

@@ -12,7 +12,7 @@ import {
   JsonInsert,
   defaultJSONComparator,
   defualtJSONStopComparison,
-} from '../../src/dialogUtils/jsonDiff';
+} from '../../src/jsonDiff';
 
 describe('json diff check comparators', () => {
   it('defualtJSONStopComparison', () => {

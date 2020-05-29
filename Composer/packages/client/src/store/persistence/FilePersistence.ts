@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import keys from 'lodash/keys';
-import { JsonDiff } from '@bfc/indexers/lib/dialogUtils/jsonDiff';
+import { JsonDiff } from '@bfc/shared';
 
 import { Store, State } from '../types';
 import { setError, fetchProject } from '../action';

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import has from 'lodash/has';
-import { DialogInfo, FileInfo, Diagnostic } from '@bfc/shared';
+import { DialogInfo, FileInfo, Diagnostic, JsonWalk, VisitorFunc } from '@bfc/shared';
 
 import ExtractMemoryPaths from './dialogUtils/extractMemoryPaths';
 import ExtractIntentTriggers from './dialogUtils/extractIntentTriggers';
@@ -15,7 +15,6 @@ import {
   ExtractLUFile,
 } from './dialogUtils/extractResources';
 import { checkerFuncs } from './dialogUtils/dialogChecker';
-import { JsonWalk, VisitorFunc } from './utils/jsonWalk';
 import { getBaseName } from './utils/help';
 
 // check all fields

@@ -21,4 +21,7 @@ export * from './schemaUtils';
 export * from './types';
 export * from './viewUtils';
 export * from './walkerUtils';
+export * from './jsonWalk';
+export * from './jsonDiff';
+export * from './dialogDiff';
 export const DialogUtils = dialogUtils;

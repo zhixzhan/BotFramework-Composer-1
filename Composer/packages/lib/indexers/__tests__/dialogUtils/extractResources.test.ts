@@ -10,7 +10,7 @@ describe('extract resources in dialog', () => {
         id: '157674',
         name: 'Send a response',
       },
-      activity: '${bfdactivity-157674()}',
+      activity: '${SendActivity_157674()}',
     };
 
     const resources = ExtractResources(dialog1);
@@ -19,7 +19,7 @@ describe('extract resources in dialog', () => {
     expect(resources.luIntents.length).toEqual(0);
     expect(resources.lgTemplates).toEqual([
       {
-        name: 'bfdactivity-157674',
+        name: 'SendActivity_157674',
         path: '$',
       },
     ]);

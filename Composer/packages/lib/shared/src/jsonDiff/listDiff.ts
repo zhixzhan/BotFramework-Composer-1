@@ -8,7 +8,7 @@ import differenceWith from 'lodash/differenceWith';
 import indexOf from 'lodash/indexOf';
 // import pullAllWith from 'lodash/pullAllWith';
 
-import { IJsonChanges, IComparator, JsonDiff, IJSONChangeUpdate, defualtJSONStopComparison } from './jsonDiff';
+import { IJsonChanges, IComparator, JsonDiff, IJSONChangeUpdate, defualtJSONStopComparison } from '../jsonDiff';
 
 // updates in N level list, may be an add/delete/update in N+1 level
 // continue walk in current list.

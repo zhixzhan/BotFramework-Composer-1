@@ -2,9 +2,7 @@
 // Licensed under the MIT License.
 
 import has from 'lodash/has';
-import { SDKKinds } from '@bfc/shared';
-
-import { VisitorFunc, JsonWalk } from './jsonWalk';
+import { SDKKinds, VisitorFunc, JsonWalk } from '@bfc/shared';
 
 /**
  * fix dialog referrence.

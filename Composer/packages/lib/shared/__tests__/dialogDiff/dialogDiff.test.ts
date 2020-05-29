@@ -5,10 +5,10 @@ import fs from 'fs';
 
 import get from 'lodash/get';
 
-import { DialogDiff } from '../../src/dialogUtils/dialogDiff';
-import { JsonInsert, JsonSet } from '../../src/dialogUtils/jsonDiff';
+import { DialogDiff } from '../../src/dialogDiff';
+import { JsonInsert, JsonSet } from '../../src/jsonDiff';
 
-const baseDialog = JSON.parse(fs.readFileSync(`${__dirname}/data/todosample.test.dialog`, 'utf-8'));
+const baseDialog = JSON.parse(fs.readFileSync(`${__dirname}/a.dialog`, 'utf-8'));
 
 describe('dialog diff', () => {
   it('check action adds', () => {

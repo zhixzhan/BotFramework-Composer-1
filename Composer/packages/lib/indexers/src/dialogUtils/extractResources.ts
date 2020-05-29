@@ -3,9 +3,16 @@
 
 import has from 'lodash/has';
 import uniq from 'lodash/uniq';
-import { extractLgTemplateRefs, SDKKinds, ITrigger, LgTemplateJsonPath, ReferredLuIntents } from '@bfc/shared';
+import {
+  extractLgTemplateRefs,
+  SDKKinds,
+  ITrigger,
+  LgTemplateJsonPath,
+  ReferredLuIntents,
+  VisitorFunc,
+  JsonWalk,
+} from '@bfc/shared';
 
-import { VisitorFunc, JsonWalk } from '../utils/jsonWalk';
 import { getBaseName } from '../utils/help';
 
 import { createPath } from './dialogChecker';

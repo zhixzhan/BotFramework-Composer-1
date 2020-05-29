@@ -124,7 +124,6 @@ export enum SDKKinds {
   UrlEntityRecognizer = 'Microsoft.UrlEntityRecognizer',
   VirtualLG = 'VirtualLG',
   VirtualLU = 'VirtualLU',
-  VirtualTemplateString = 'VirtualTemplateString',
 }
 
 export enum SDKRoles {

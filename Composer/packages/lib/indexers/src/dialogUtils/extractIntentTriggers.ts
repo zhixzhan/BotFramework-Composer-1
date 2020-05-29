@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import { SDKKinds, IIntentTrigger, FieldNames } from '@bfc/shared';
-
-import { VisitorFunc, JsonWalk } from '../utils/jsonWalk';
+import { SDKKinds, IIntentTrigger, FieldNames, VisitorFunc, JsonWalk } from '@bfc/shared';
 
 function ExtractAllBeginDialogs(value: any): string[] {
   const dialogs: string[] = [];

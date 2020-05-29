@@ -17,12 +17,12 @@ import {
   LgTemplateRef,
   LuType,
   LuMetaData,
+  JsonWalk,
+  VisitorFunc,
+  DialogDiff,
 } from '@bfc/shared';
 
-import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
 import { getBaseName } from '../utils/help';
-
-import { DialogDiff } from './dialogDiff';
 
 export const VirtualLGPropName = '_virtual_lg';
 export const VirtualLUPropName = '_virtual_lu';

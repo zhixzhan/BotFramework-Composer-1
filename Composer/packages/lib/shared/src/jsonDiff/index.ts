@@ -6,7 +6,7 @@ import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
 import { JSONPath } from 'jsonpath-plus';
 
-import { JsonWalk, VisitorFunc } from '../utils/jsonWalk';
+import { JsonWalk, VisitorFunc } from '../jsonWalk';
 
 import { ListDiff } from './listDiff';
 

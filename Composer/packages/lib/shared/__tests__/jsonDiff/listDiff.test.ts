@@ -5,8 +5,8 @@ import has from 'lodash/has';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 
-import { JsonInsert, JsonSet, IComparator, IJSONChangeUpdate } from '../../src/dialogUtils/jsonDiff';
-import { ListDiff, deconstructChangesInListUpdateChanges } from '../../src/dialogUtils/listDiff';
+import { JsonInsert, JsonSet, IComparator, IJSONChangeUpdate } from '../../src/jsonDiff';
+import { ListDiff, deconstructChangesInListUpdateChanges } from '../../src/jsonDiff/listDiff';
 
 describe('list diff basic function', () => {
   it('should deconstruct changes', () => {

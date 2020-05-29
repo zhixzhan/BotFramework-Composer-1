@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import isEqual from 'lodash/isEqual';
-import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
+import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/virtualDialog';
 import { LgFile, LuFile, SDKKinds } from '@bfc/shared';
 import { dialogIndexer } from '@bfc/indexers';
 

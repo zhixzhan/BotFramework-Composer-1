@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { WidgetContainerProps } from '@bfc/extension';
-import { getVirtualLG } from '@bfc/indexers/lib/dialogUtils/virtualDialog';
+import { getVirtualLG } from '@bfc/indexers/lib/virtualDialog';
 
 export interface LgWidgetProps extends WidgetContainerProps {
   /** indicates which field contains lg activity. ('activity', 'prompt', 'invalidPropmt'...) */
