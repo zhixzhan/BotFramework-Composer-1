@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import isEqual from 'lodash/isEqual';
-import { DialogConverterReverse, DialogResourceChanges } from '@bfc/indexers/lib/virtualDialog';
+import { VirtualDialogConverterReverse, VirtualDialogResourceChanges } from '@bfc/indexers';
 import { LgFile, LuFile, SDKKinds } from '@bfc/shared';
 import { dialogIndexer } from '@bfc/indexers';
 
@@ -49,7 +49,7 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
   const dialogFile = dialogs.find(f => f.id === id);
   const dialogLgFile = lgFiles.find(f => f.id === `${id}.${locale}`);
   const dialogLuFile = luFiles.find(f => f.id === `${id}.${locale}`);
-  const changes = DialogResourceChanges(prevContent, content);
+  const changes = VirtualDialogResourceChanges(prevContent, content);
 
   console.log('Reducer changes: ', changes);
 
@@ -84,7 +84,7 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
     }
   }
 
-  const newDialogContent = DialogConverterReverse(newDialog?.content || content);
+  const newDialogContent = VirtualDialogConverterReverse(newDialog?.content || content);
   if (dialogFile && !isEqual(newDialogContent, dialogFile.content)) {
     newDialog = { ...dialogFile, ...dialogIndexer.parse(dialogFile.id, newDialogContent, schemas.sdk.content) };
   }

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 import cloneDeep from 'lodash/cloneDeep';
 import { useContext, useEffect, useState, useMemo } from 'react';
-import { DialogConverter, VirtualSchemaConverter } from '@bfc/indexers';
+import { VirtualDialogConverter, VirtualSchemaConverter } from '@bfc/indexers';
 
 import { State } from '../store/types';
 import { StoreContext } from '../store';
@@ -10,7 +10,7 @@ import { StoreContext } from '../store';
 const createVirtualDialogs = (state: State, lgFileResolver, luFileResolver) => {
   const newDialogs = state.dialogs.map(d => {
     const dialog = cloneDeep(d);
-    dialog.content = DialogConverter(dialog.content, lgFileResolver, luFileResolver);
+    dialog.content = VirtualDialogConverter(dialog.content, lgFileResolver, luFileResolver);
     return dialog;
   });
   return newDialogs;
