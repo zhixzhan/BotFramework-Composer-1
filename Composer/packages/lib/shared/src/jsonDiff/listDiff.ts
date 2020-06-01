@@ -2,13 +2,11 @@
 // Licensed under the MIT License.
 
 import isEqual from 'lodash/isEqual';
-import intersectionBy from 'lodash/intersectionBy';
-import differenceWith from 'lodash/differenceWith';
-import indexOf from 'lodash/indexOf';
 
 import { IJsonChanges, IComparator } from '../jsonDiff/types';
 
 import { deConstructChangesInListUpdateChanges } from './deConstructChangesInListUpdateChanges';
+import { ListCompare } from './listCompare';
 
 /**
  * diff with listItem's change
@@ -45,26 +43,11 @@ export function ListDiff(list1: any[], list2: any[], comparator?: IComparator): 
     }
   };
 
-  // difference comparator is an updated comparator
-  const list1Changes = differenceWith(list1, list2, usedComparator).map(item => {
-    return {
-      index: indexOf(list1, item),
-      value: item,
-    };
-  }); // list1[index] item are not found in list2
-  const list2Changes = differenceWith(list2, list1, usedComparator).map(item => {
-    return {
-      index: indexOf(list2, item),
-      value: item,
-    };
-  }); // list2[index] item are not found in list1
-
-  // same index's change are should be an `update`.
-  const updateChanges = intersectionBy(list2Changes, list1Changes, 'index');
-  const updateChangesIndex = updateChanges.map(({ index }) => index);
-  // pull out changes already included by `updates`
-  const deleteChanges = list1Changes.filter(({ index }) => !updateChangesIndex.includes(index));
-  const addChanges = list2Changes.filter(({ index }) => !updateChangesIndex.includes(index));
+  const { adds: addChanges, deletes: deleteChanges, updates: updateChanges } = ListCompare(
+    list1,
+    list2,
+    usedComparator
+  );
 
   // format outputs
   const adds = addChanges.map(({ index, value }) => {

@@ -1,12 +1,36 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import isEqual from 'lodash/isEqual';
-import differenceWith from 'lodash/differenceWith';
-import { DialogDiff } from '@bfc/shared';
+import { DialogDiff, ListCompare } from '@bfc/shared';
 
-import { IResourceChanges } from './types';
+import { IResourceChanges, ILUResourceChanges, ILGResourceChanges } from './types';
 import { VirtualDialogResource } from './virtualDialogResource';
+
+function lgListResourceChanges(list1, list2): ILGResourceChanges {
+  const changes = ListCompare(list1, list2);
+  const adds = changes.adds.map(({ value }) => value);
+  const deletes = changes.deletes.map(({ value }) => value.name);
+  const updates = changes.updates.map(({ value }) => value);
+
+  return {
+    adds,
+    deletes,
+    updates,
+  };
+}
+
+function luListResourceChanges(list1, list2): ILUResourceChanges {
+  const changes = ListCompare(list1, list2);
+  const adds = changes.adds.map(({ value }) => value);
+  const deletes = changes.deletes.map(({ value }) => value.Name);
+  const updates = changes.updates.map(({ value }) => value);
+
+  return {
+    adds,
+    deletes,
+    updates,
+  };
+}
 
 export function VirtualDialogResourceChanges(dialog1, dialog2): IResourceChanges {
   const changes = {
@@ -33,10 +57,15 @@ export function VirtualDialogResourceChanges(dialog1, dialog2): IResourceChanges
   for (const item of updates) {
     const { lg: prevLg, lu: prevLu } = VirtualDialogResource(item.preValue);
     const { lg: currLg, lu: currLu } = VirtualDialogResource(item.value);
-    const lg = differenceWith(currLg, prevLg, isEqual);
-    const lu = differenceWith(currLu, prevLu, isEqual);
-    changes.lg.updates.push(...lg);
-    changes.lu.updates.push(...lu);
+    const lgChanges = lgListResourceChanges(prevLg, currLg);
+    const luChanges = luListResourceChanges(prevLu, currLu);
+
+    changes.lg.updates.push(...lgChanges.updates);
+    changes.lg.adds.push(...lgChanges.adds);
+    changes.lg.deletes.push(...lgChanges.deletes);
+    changes.lu.updates.push(...luChanges.updates);
+    changes.lu.adds.push(...luChanges.adds);
+    changes.lu.deletes.push(...luChanges.deletes);
   }
 
   for (const item of deletes) {

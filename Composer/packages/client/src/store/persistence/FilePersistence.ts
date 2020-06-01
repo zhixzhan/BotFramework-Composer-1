@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import keys from 'lodash/keys';
-import { JsonDiff } from '@bfc/shared';
+import { ListCompare } from '@bfc/shared';
 
 import { Store, State } from '../types';
 import { setError, fetchProject } from '../action';
@@ -147,43 +147,50 @@ class FilePersistence {
   }
 
   private _resourceToContent(files: any[], ext: FileExtensions): any[] {
-    return files.reduce((result, { id, content }) => {
-      const fileId = `${id}${ext}`;
-      result[fileId] = ext === FileExtensions.Dialog ? JSON.stringify(content, null, 2) : content;
-      return result;
-    }, {});
+    return files.map(file => {
+      const id = `${file.id}${ext}`;
+      const content = ext === FileExtensions.Dialog ? JSON.stringify(file.content, null, 2) : file.content;
+      return {
+        id,
+        content,
+      };
+    });
   }
 
   private _getResourceFileChanges(previousState: State, currentState: State) {
     const fileChanges: IFileChange[] = [];
-    const prevResource = {
+    const prevResource = [
       ...this._resourceToContent(previousState.dialogs, FileExtensions.Dialog),
       ...this._resourceToContent(previousState.lgFiles, FileExtensions.Lg),
       ...this._resourceToContent(previousState.luFiles, FileExtensions.Lu),
-    };
-    const currResource = {
+    ];
+    const currResource = [
       ...this._resourceToContent(currentState.dialogs, FileExtensions.Dialog),
       ...this._resourceToContent(currentState.lgFiles, FileExtensions.Lg),
       ...this._resourceToContent(currentState.luFiles, FileExtensions.Lu),
-    };
+    ];
 
-    const diffs = JsonDiff(prevResource, currResource);
+    const diffs = ListCompare(prevResource, currResource);
     const { adds, deletes, updates } = diffs;
 
-    for (const { path, value } of adds) {
-      const fileId = path.replace(/^\$\./, '').replace(/^\$\[(.*)\]/, '$1');
-      fileChanges.push({ id: fileId, change: value, type: ChangeType.CREATE });
+    for (const {
+      value: { id, content },
+    } of adds) {
+      fileChanges.push({ id, change: content, type: ChangeType.CREATE });
     }
 
-    for (const { path, value } of deletes) {
-      const fileId = path.replace(/^\$\./, '').replace(/^\$\[(.*)\]/, '$1');
-      fileChanges.push({ id: fileId, change: value, type: ChangeType.DELETE });
+    for (const {
+      value: { id, content },
+    } of deletes) {
+      fileChanges.push({ id, change: content, type: ChangeType.DELETE });
     }
 
-    for (const { path, value } of updates) {
-      const fileId = path.replace(/^\$\./, '').replace(/^\$\[(.*)\]/, '$1');
-      fileChanges.push({ id: fileId, change: value, type: ChangeType.UPDATE });
+    for (const {
+      value: { id, content },
+    } of updates) {
+      fileChanges.push({ id, change: content, type: ChangeType.UPDATE });
     }
+
     console.log('FilePersistence changes: ', fileChanges);
     return fileChanges;
   }

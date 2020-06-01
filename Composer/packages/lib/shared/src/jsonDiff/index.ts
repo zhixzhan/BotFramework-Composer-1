@@ -3,3 +3,4 @@
 
 export * from './jsonDiff';
 export { JsonInsert, JsonSet } from './helper';
+export { ListCompare } from './listCompare';

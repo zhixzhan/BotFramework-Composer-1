@@ -27,7 +27,7 @@ export function VirtualDialogConverter(
 
   const intentType = recognizerType(dialog);
   if (intentType === SDKKinds.RegexRecognizer) {
-    luIntents = dialog?.recognizer?.intents.map(({ intent, pattern }) => {
+    luIntents = dialog?.recognizer?.intents?.map(({ intent, pattern }) => {
       return {
         Name: intent,
         Body: pattern,

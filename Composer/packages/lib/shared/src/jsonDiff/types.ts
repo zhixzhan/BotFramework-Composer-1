@@ -32,3 +32,15 @@ export type IComparator = (
   path: string
 ) => { isChange: boolean; isAdd: boolean; isStop: boolean };
 export type IStopper = (json1: any, json2: any, path: string) => boolean;
+
+export type IValueComparator = (value1: any, value2: any) => boolean;
+
+type IListChange = {
+  index: number;
+  value: any;
+};
+export type IListCompareChanges = {
+  adds: IListChange[];
+  deletes: IListChange[];
+  updates: IListChange[];
+};

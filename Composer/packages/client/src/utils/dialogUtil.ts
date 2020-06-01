@@ -111,9 +111,8 @@ export function updateRegExIntent(dialog: DialogInfo, intent: string, pattern: s
 }
 
 export const recognizerType = (dialog: any): string | null => {
-  const { recognizer } = dialog;
-
-  if (recognizer) {
+  if (dialog?.recognizer) {
+    const { recognizer } = dialog;
     if (typeof recognizer === 'object' && recognizer.$kind === SDKKinds.RegexRecognizer) {
       return SDKKinds.RegexRecognizer;
     } else if (typeof recognizer === 'string') {
