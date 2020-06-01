@@ -54,7 +54,7 @@ export const getContainsLuName = (data): string | undefined => {
   }
 };
 
-export const serilizeLgRefByDesignerId = value => {
+export const serializeLgRefByDesignerId = value => {
   if (has(value, '$kind')) {
     LGTemplateFields.forEach(field => {
       if (has(value, field)) {

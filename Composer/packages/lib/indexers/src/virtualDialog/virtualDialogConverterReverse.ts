@@ -4,7 +4,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { JsonWalk, VisitorFunc } from '@bfc/shared';
 
-import { unsetVirtualProps, serilizeLgRefByDesignerId } from './helper';
+import { unsetVirtualProps, serializeLgRefByDesignerId } from './helper';
 
 export function VirtualDialogConverterReverse(dialog: {
   [key: string]: any;
@@ -18,7 +18,7 @@ export function VirtualDialogConverterReverse(dialog: {
       Object.keys(value).forEach(key => {
         unsetVirtualProps(value);
       });
-      serilizeLgRefByDesignerId(value); // TODO: double check
+      serializeLgRefByDesignerId(value); // TODO: double check
     }
     return false;
   };
