@@ -15,8 +15,8 @@ import {
   IJSONChangeUpdate,
   IComparator,
   IStopper,
-} from '../../src/jsonDiff/types';
-import { getWithJsonPath, hasWithJsonPath } from '../../src/jsonDiff/helper';
+} from '../jsonDiff/types';
+import { getWithJsonPath, hasWithJsonPath } from '../jsonDiff/helper';
 
 import { isSameDesignerId, isSameKind } from './comparators';
 import { mergeChanges, mergeUpdateChanges } from './helper';

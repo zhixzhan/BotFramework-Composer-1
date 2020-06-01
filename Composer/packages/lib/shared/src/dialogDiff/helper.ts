@@ -4,8 +4,8 @@
 import isEqual from 'lodash/isEqual';
 import uniqWith from 'lodash/uniqWith';
 
-import { IJSONChangeAdd, IJSONChangeDelete, IJSONChangeUpdate } from '../../src/jsonDiff/types';
-import { getWithJsonPath, jsonPathParrent, JsonPathStart } from '../../src/jsonDiff/helper';
+import { IJSONChangeAdd, IJSONChangeDelete, IJSONChangeUpdate } from '../jsonDiff/types';
+import { getWithJsonPath, jsonPathParrent, JsonPathStart } from '../jsonDiff/helper';
 
 import { DialogObject } from './types';
 import { isDialogItem } from './comparators';
