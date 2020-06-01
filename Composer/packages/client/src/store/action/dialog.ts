@@ -67,20 +67,23 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
     }
   }
 
-  const luType = recognizerType(dialogFile?.content);
-  if (luType === SDKKinds.LuisRecognizer && dialogLuFile) {
-    let newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
-    newContent = luUtil.addIntents(newContent, changes.lu.adds);
-    newContent = luUtil.updateIntents(newContent, changes.lu.updates);
-    if (newContent !== dialogLuFile.content) {
-      const { intents, diagnostics } = (await LuWorker.parse(dialogLuFile.id, newContent)) as LuFile;
-      newLuFile = { id: dialogLuFile.id, content: newContent, intents, diagnostics };
-    }
-  } else if (luType === SDKKinds.RegexRecognizer && dialogFile) {
-    newDialog = { ...dialogFile };
-    for (const intent of changes.lu.updates) {
-      const { Name, Body: pattern } = intent;
-      newDialog = updateRegExIntent(newDialog, Name, pattern);
+  const prevLuType = recognizerType(prevContent);
+  const currLuType = recognizerType(content);
+  if (prevLuType === currLuType) {
+    if (currLuType === SDKKinds.LuisRecognizer && dialogLuFile) {
+      let newContent = luUtil.removeIntents(dialogLuFile.content, changes.lu.deletes);
+      newContent = luUtil.addIntents(newContent, changes.lu.adds);
+      newContent = luUtil.updateIntents(newContent, changes.lu.updates);
+      if (newContent !== dialogLuFile.content) {
+        const { intents, diagnostics } = (await LuWorker.parse(dialogLuFile.id, newContent)) as LuFile;
+        newLuFile = { id: dialogLuFile.id, content: newContent, intents, diagnostics };
+      }
+    } else if (currLuType === SDKKinds.RegexRecognizer && dialogFile) {
+      newDialog = { ...dialogFile };
+      for (const intent of changes.lu.updates) {
+        const { Name, Body: pattern } = intent;
+        newDialog = updateRegExIntent(newDialog, Name, pattern);
+      }
     }
   }
 
