@@ -39,7 +39,12 @@ export function useShell(source: EventSource): { api: ShellApi; data: ShellData 
   const updateVirtualDialog = actions.updateVirtualDialog;
 
   const { dialogId, selected, focused, promptTab } = designPageLocation;
-  const dialogsMap = useVirtualDialog();
+  const virtualDialogs = useVirtualDialog();
+  const dialogsMap = virtualDialogs.reduce((result, dialog) => {
+    result[dialog.id] = dialog.content;
+    return result;
+  }, {});
+
   const vSchemas = useVirtualSchema();
 
   function cleanData() {

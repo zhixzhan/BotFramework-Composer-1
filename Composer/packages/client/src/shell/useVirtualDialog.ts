@@ -29,13 +29,7 @@ export function useVirtualDialog() {
     setVirtualDialogs(newVDialog);
   }, [projectId, state.dialogs, state.lgFiles, state.luFiles]);
 
-  const dialogsMap = virtualDialogs.reduce((result, dialog) => {
-    result[dialog.id] = dialog.content;
-    return result;
-  }, {});
-
-  // console.log(dialogsMap);
-  return dialogsMap;
+  return virtualDialogs;
 }
 
 export function useVirtualSchema() {

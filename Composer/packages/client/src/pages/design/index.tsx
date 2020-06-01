@@ -27,6 +27,7 @@ import { ToolBar } from '../../components/ToolBar/index';
 import { clearBreadcrumb } from '../../utils/navigation';
 import undoHistory from '../../store/middlewares/undo/history';
 import { navigateTo } from '../../utils';
+import { useVirtualDialog } from '../../shell/useVirtualDialog';
 
 import { VisualEditorAPI } from './FrameAPI';
 import {
@@ -124,6 +125,9 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
       return;
     }
   }, [dialogId, dialogs, location]);
+
+  const virtualDialogs = useVirtualDialog();
+  const currentVirtualDialog = virtualDialogs.find(({ id }) => id === currentDialog.id) || currentDialog;
 
   useEffect(() => {
     const index = currentDialog.triggers.findIndex(({ type }) => type === SDKKinds.OnBeginDialog);
@@ -427,9 +431,16 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
                     key={'dialogjson'}
                     id={'dialogjson'}
                     onChange={data => {
-                      actions.updateDialog({ id: currentDialog.id, projectId, content: data });
+                      // actions.updateDialog({ id: currentDialog.id, projectId, content: data });
+                      actions.updateVirtualDialog({
+                        id: currentVirtualDialog.id,
+                        projectId,
+                        content: data,
+                        prevContent: currentVirtualDialog.content,
+                      });
                     }}
-                    value={currentDialog.content || undefined}
+                    value={currentVirtualDialog.content || undefined}
+                    // value={currentDialog.content || undefined}
                     schema={schemas.sdk.content}
                   />
                 ) : (
