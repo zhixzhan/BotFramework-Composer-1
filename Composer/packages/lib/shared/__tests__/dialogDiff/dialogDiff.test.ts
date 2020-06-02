@@ -34,7 +34,7 @@ describe('dialog diff', () => {
     expect(changes1.adds[0].path).toEqual(`$.${inserts1[0].path}`);
     expect(changes1.adds[0].value).toEqual(inserts1[0].value);
 
-    // delete
+    // delete, (mirror to add)
     const changes11 = DialogDiff(dialog1, baseDialog);
     expect(changes11.deletes.length).toEqual(1);
     expect(changes11.adds.length).toEqual(0);

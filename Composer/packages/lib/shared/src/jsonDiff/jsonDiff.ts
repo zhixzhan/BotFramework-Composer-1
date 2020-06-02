@@ -17,8 +17,7 @@ import { IStopper, IComparator, IJSONChangeAdd, IJSONChangeDelete, IJSONChangeUp
  * case 1: they both are object walk-able value, same type, e.g. {}, {a:1} -> false,
  * case 2: they are not same type, e.g. {}, [] -> true
  * case 3: one of them is non-walk-able type, e.g. 1, {} -> true
- * TODO:
- * case 4: both are array, [], [] -> listDiff
+ * case 4: both are array, pass to listDiff
  */
 export const defualtJSONStopComparison: IStopper = (json1: any, json2: any, path: string) => {
   const value1 = getWithJsonPath(json1, path);
@@ -123,6 +122,7 @@ export function JsonDiffUpdates(prevJson, currJson, comparator?: IComparator): I
  * if key '[4]' is deleted, and list.length - 1, it's a delete happens somewhere, to figure out where, we need compararion cross all list item.
  * if all key is same, which means list.length is same, the fact probably be `update on [1] & add on [5] & delete on [0]` .
  *
+ * notes: final export is JsonDiff which wrapped ListDiff.
  * @param prevJson {[key:string]: any}
  * @param currJson
  * @param comparator

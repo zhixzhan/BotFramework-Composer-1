@@ -5,7 +5,7 @@ import isEqual from 'lodash/isEqual';
 
 import { IJsonChanges, IComparator } from '../jsonDiff/types';
 
-import { deConstructChangesInListUpdateChanges } from './deConstructChangesInListUpdateChanges';
+import { deconstructUpdates } from './deconstructUpdates';
 import { ListCompare } from './listCompare';
 
 /**
@@ -71,7 +71,7 @@ export function ListDiff(list1: any[], list2: any[], comparator?: IComparator): 
     };
   });
 
-  const changesInUpdates = deConstructChangesInListUpdateChanges(updates, comparator);
+  const changesInUpdates = deconstructUpdates(updates, comparator);
 
   return {
     adds: adds.concat(changesInUpdates.adds),

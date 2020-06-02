@@ -7,52 +7,8 @@ import { JsonDiff, defaultJSONComparator, defualtJSONStopComparison } from '../.
 import { IComparator } from '../../src/jsonDiff/types';
 import { getWithJsonPath, hasWithJsonPath, JsonSet, JsonInsert } from '../../src/jsonDiff/helper';
 
-describe('json diff check comparators', () => {
-  it('defualtJSONStopComparison', () => {
-    expect(defualtJSONStopComparison({}, { a: 1 }, '$')).toEqual(false);
-    expect(defualtJSONStopComparison({}, [], '$')).toEqual(true);
-    expect(defualtJSONStopComparison(1, { a: 1 }, '$')).toEqual(true);
-    expect(defualtJSONStopComparison(1, 'a', '$')).toEqual(true);
-  });
-
-  it('defaultJSONComparator', () => {
-    const result1 = defaultJSONComparator({}, { a: 1 }, '$');
-    expect(result1.isChange).toEqual(true);
-    expect(result1.isStop).toEqual(false);
-
-    const result2 = defaultJSONComparator({}, { a: 1 }, '$.a');
-    expect(result2.isChange).toEqual(false); // '$.a' is an `add` not `update`
-    expect(result2.isStop).toEqual(true);
-    expect(result2.isAdd).toEqual(true);
-
-    const result3 = defaultJSONComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$.a');
-    expect(result3.isChange).toEqual(true); // '$.a' update from 0 to 1
-    expect(result3.isStop).toEqual(true);
-
-    const result4 = defaultJSONComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$.b');
-    expect(result4.isChange).toEqual(true); // '$.a' update from 2 to []
-    expect(result4.isStop).toEqual(true);
-
-    const result5 = defaultJSONComparator({ a: 0, b: 2 }, { a: 1, b: [] }, '$');
-    expect(result5.isChange).toEqual(true);
-    expect(result5.isStop).toEqual(false);
-
-    const result6 = defaultJSONComparator([1, 2], { a: 1, b: [] }, '$');
-    expect(result6.isChange).toEqual(true); // update on '$'
-    expect(result6.isStop).toEqual(true);
-
-    const result7 = defaultJSONComparator([1, 2], [1, 22, 3], '$.[1]');
-    expect(result7.isChange).toEqual(true);
-    expect(result7.isStop).toEqual(true);
-
-    const result8 = defaultJSONComparator([1, 2], [1, 22, 3], '$.[0]');
-    expect(result8.isChange).toEqual(false);
-    expect(result8.isStop).toEqual(true);
-  });
-});
-
-describe('json diff with default comparator', () => {
-  it('get all changes in sample object', () => {
+describe('json diff test sample object', () => {
+  it('get all changes on object value', () => {
     const lhs = {
       foo: {
         bar: {
@@ -97,8 +53,10 @@ describe('json diff with default comparator', () => {
     expect(changes.updates[1].preValue).toEqual('world');
     expect(changes.updates[1].value).toEqual('fizz');
   });
+});
 
-  it('get all changes in complicapte object', () => {
+describe('json diff test complicapte object', () => {
+  it('get all changes on array value', () => {
     const lhs2 = {
       foo: {
         bar: {
@@ -162,48 +120,50 @@ describe('json diff with default comparator', () => {
     expect(changes.updates[0].value).toEqual(rhs2.foo.bar.f[1].name);
     expect(changes.updates[0].preValue).toEqual(lhs2.foo.bar.f[1].name);
   });
+});
 
-  it('get all changes in deep object', () => {
-    const basic = {
-      foo: {
-        bar: [
-          {
-            id: 1,
-            name: 'a',
-            items: [
-              {
-                id: 11,
-                name: 'a1',
-              },
-              {
-                id: 12,
-                name: 'a2',
-              },
-            ],
-          },
-        ],
-      },
-      buzz: 'world',
-    };
-
-    const insert1 = [
-      {
-        path: 'foo.bar[0].items[0]',
-        value: {
-          id: 10,
-          name: 'a0',
+describe('json diff test deep nested object', () => {
+  const basic = {
+    foo: {
+      bar: [
+        {
+          id: 1,
+          name: 'a',
+          items: [
+            {
+              id: 11,
+              name: 'a1',
+            },
+            {
+              id: 12,
+              name: 'a2',
+            },
+          ],
         },
-      },
-    ];
-    const object1 = JsonInsert(basic, insert1);
+      ],
+    },
+    buzz: 'world',
+  };
 
+  const insert1 = [
+    {
+      path: 'foo.bar[0].items[0]',
+      value: {
+        id: 10,
+        name: 'a0',
+      },
+    },
+  ];
+  it('get all add changes', () => {
+    const object1 = JsonInsert(basic, insert1);
     const changes1 = JsonDiff(basic, object1);
     expect(changes1.adds.length).toEqual(1);
     expect(changes1.deletes.length).toEqual(0);
     expect(changes1.updates.length).toEqual(0);
     expect(changes1.adds[0].path).toEqual(`$.${insert1[0].path}`);
     expect(changes1.adds[0].value).toEqual(insert1[0].value);
-
+  });
+  it('get all update changes', () => {
     const object2 = JsonSet(basic, insert1);
     const changes2 = JsonDiff(basic, object2);
     expect(changes2.adds.length).toEqual(0);
@@ -215,6 +175,17 @@ describe('json diff with default comparator', () => {
 });
 
 describe('json diff with customize comparator', () => {
+  // A customize comparator, if two object has same id, they are same.
+  const myComparator: IComparator = (json1: any, json2: any, path: string) => {
+    if (hasWithJsonPath(json1, `${path}.id`) && hasWithJsonPath(json2, `${path}.id`)) {
+      const isChange = !isEqual(getWithJsonPath(json1, `${path}.id`), getWithJsonPath(json2, `${path}.id`));
+      const isAdd = !hasWithJsonPath(json1, path) && hasWithJsonPath(json1, path);
+      const isStop = isChange || defualtJSONStopComparison(json1, json2, path);
+      return { isChange, isAdd, isStop };
+    } else {
+      return defaultJSONComparator(json1, json2, path);
+    }
+  };
   const basic = {
     foo: {
       bar: {
@@ -239,19 +210,7 @@ describe('json diff with customize comparator', () => {
     },
     buzz: 'world',
   };
-  it('get insertion/updates in list', () => {
-    // A customize comparator, if two object has same id, they are same.
-    const myComparator: IComparator = (json1: any, json2: any, path: string) => {
-      if (hasWithJsonPath(json1, `${path}.id`) && hasWithJsonPath(json2, `${path}.id`)) {
-        const isChange = !isEqual(getWithJsonPath(json1, `${path}.id`), getWithJsonPath(json2, `${path}.id`));
-        const isAdd = !hasWithJsonPath(json1, path) && hasWithJsonPath(json1, path);
-        const isStop = isChange || defualtJSONStopComparison(json1, json2, path);
-        return { isChange, isAdd, isStop };
-      } else {
-        return defaultJSONComparator(json1, json2, path);
-      }
-    };
-
+  it('should not be counted as a change if id is same', () => {
     const insert1 = [
       {
         path: 'foo.bar.c[0]',
@@ -271,7 +230,8 @@ describe('json diff with customize comparator', () => {
     expect(changes1.adds[0].value).toEqual(insert1[0].value);
     expect(changes1.adds[1].path).toEqual(`$.${insert1[1].path}`);
     expect(changes1.adds[1].value).toEqual(insert1[1].value);
-
+  });
+  it('should be counted as a change if id is diffrent', () => {
     const insert2 = [
       {
         path: 'foo.bar.c[1]',

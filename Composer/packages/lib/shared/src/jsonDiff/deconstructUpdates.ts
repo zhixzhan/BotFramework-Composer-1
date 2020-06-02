@@ -6,29 +6,26 @@ import { IJsonChanges, IComparator, IJSONChangeUpdate } from '../jsonDiff/types'
 
 // updates in N level list, may be an add/delete/update in N+1 level
 // continue walk in current list.
-export function deConstructChangesInListUpdateChanges(
-  updates: IJSONChangeUpdate[],
-  comparator?: IComparator
-): IJsonChanges {
+export function deconstructUpdates(updates: IJSONChangeUpdate[], comparator?: IComparator): IJsonChanges {
   const results: IJsonChanges = {
     adds: [],
     deletes: [],
     updates: [],
   };
 
-  const fixedUpdates: IJSONChangeUpdate[] = [];
+  const leafUpdates: IJSONChangeUpdate[] = [];
   for (let index = 0; index < updates.length; index++) {
     const item = updates[index];
     const { preValue, value } = item;
     if (comparator ? comparator(preValue, value, '$').isStop : defualtJSONStopComparison(preValue, value, '$')) {
       // it's an end level change, no need to walk in.
-      fixedUpdates.push(item);
+      leafUpdates.push(item);
       continue;
     }
 
     const changes = JsonDiff(preValue, value, comparator);
 
-    const changesInUpdates = deConstructChangesInListUpdateChanges(changes.updates, comparator);
+    const changesInUpdates = deconstructUpdates(changes.updates, comparator);
 
     const adds = [...changes.adds, ...changesInUpdates.adds].map(subItem => {
       subItem.path = `${item.path}${subItem.path.replace(/^\$/, '')}`;
@@ -46,10 +43,10 @@ export function deConstructChangesInListUpdateChanges(
 
     results.adds.push(...adds);
     results.deletes.push(...deletes);
-    fixedUpdates.push(...updates2);
+    leafUpdates.push(...updates2);
   }
 
-  results.updates = fixedUpdates;
+  results.updates = leafUpdates;
 
   return results;
 }

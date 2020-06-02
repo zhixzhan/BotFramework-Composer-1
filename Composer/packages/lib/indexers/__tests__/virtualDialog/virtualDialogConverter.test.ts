@@ -5,14 +5,12 @@ import fs from 'fs';
 import path from 'path';
 
 import get from 'lodash/get';
-import { SDKKinds } from '@bfc/shared';
 
 import { VirtualLGPropName, VirtualLUPropName } from '../../src/virtualDialog/constants';
-import { VirtualDialogConverter, VirtualDialogConverterReverse, VirtualSchemaConverter } from '../../src/virtualDialog';
+import { VirtualDialogConverter, VirtualDialogConverterReverse } from '../../src/virtualDialog';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 
-const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../_data_/schemas/sdk.schema'), 'utf-8'));
 const dialogFile = JSON.parse(
   fs.readFileSync(path.join(__dirname, '../_data_/todobotwithluissample.test.dialog'), 'utf-8')
 );
@@ -34,15 +32,6 @@ const lgFileResolver = () => {
 const luFileResolver = () => {
   return luFile;
 };
-
-describe('Virtual Schema Convert', () => {
-  it('can convert normal schema into virtual schema', () => {
-    const schema1 = VirtualSchemaConverter(schema);
-    expect(get(schema1, ['definitions', SDKKinds.VirtualLG, 'title'])).toEqual('Virtual LG');
-    const askWithVirtual = get(schema1, ['definitions', SDKKinds.Ask, 'properties', VirtualLGPropName]);
-    expect(get(askWithVirtual, 'properties.activity.$kind')).toEqual(SDKKinds.IActivityTemplate);
-  });
-});
 
 describe('Virtual Dialog Convert', () => {
   it('should convert dialog -> virtual dialog (with luis recognizer)', () => {
