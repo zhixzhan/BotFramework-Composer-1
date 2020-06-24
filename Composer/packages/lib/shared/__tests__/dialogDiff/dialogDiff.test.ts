@@ -139,6 +139,21 @@ describe('dialog diff', () => {
     expect(changes1.updates[0].path).toEqual(`$.triggers[7].actions[0]`);
     expect(changes1.updates[0].value.activity).toEqual(inserts1[0].value);
     expect(changes1.updates[0].preValue).toEqual(get(baseDialog, 'triggers[7].actions[0]'));
+
+    const inserts2 = [
+      {
+        path: 'triggers[7].actions[0].index',
+        value: 'dialog.foreach.index',
+      },
+    ];
+    const dialog2 = JsonSet(baseDialog, inserts2);
+    const changes2 = DialogDiff(baseDialog, dialog2);
+    expect(changes2.adds.length).toEqual(0);
+    expect(changes2.deletes.length).toEqual(0);
+    expect(changes2.updates.length).toEqual(1);
+    expect(changes2.updates[0].path).toEqual(`$.triggers[7].actions[0]`);
+    expect(changes2.updates[0].value.index).toEqual(inserts2[0].value);
+    expect(changes2.updates[0].preValue).toEqual(get(baseDialog, 'triggers[7].actions[0]'));
   });
 
   it('check action move', () => {

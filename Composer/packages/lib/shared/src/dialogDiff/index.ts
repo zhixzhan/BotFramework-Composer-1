@@ -7,7 +7,7 @@
 
 import isEqual from 'lodash/isEqual';
 
-import { JsonDiffAdds, JsonDiffUpdates, defualtJSONStopComparison, JsonDiffDeletes } from '../jsonDiff';
+import { defualtJSONStopComparison, JsonDiff } from '../jsonDiff';
 import {
   IJsonChanges,
   IJSONChangeAdd,
@@ -19,7 +19,7 @@ import {
 import { getWithJsonPath, hasWithJsonPath } from '../jsonDiff/helper';
 
 import { isSameDesignerId, isSameKind } from './comparators';
-import { mergeChanges, mergeUpdateChanges } from './helper';
+import { convertJsonChanges } from './helper';
 
 /**
  *
@@ -61,28 +61,20 @@ export const defaultDialogComparator: IComparator = (json1: any, json2: any, pat
  * @param comparator , the compare function used to compare tow value, decide it's a 'add' or not, hasNot in prevJson && has in currJson is the most common comparision function.
  */
 
-export function DialogDiffAdd(prevJson, currJson, comparator?: IComparator): IJSONChangeAdd[] {
+export function DialogDiff(prevJson, currJson, comparator?: IComparator): IJsonChanges {
   const usedComparator = comparator || defaultDialogComparator;
-  const changes = JsonDiffAdds(prevJson, currJson, usedComparator);
-  return mergeChanges(currJson, changes);
+  const jsonChanges = JsonDiff(prevJson, currJson, usedComparator);
+  return convertJsonChanges(prevJson, currJson, jsonChanges);
+}
+
+export function DialogDiffAdd(prevJson, currJson, comparator?: IComparator): IJSONChangeAdd[] {
+  return DialogDiff(prevJson, currJson, comparator).adds;
 }
 
 export function DialogDiffDelete(prevJson, currJson, comparator?: IComparator): IJSONChangeDelete[] {
-  const usedComparator = comparator || defaultDialogComparator;
-  const changes = JsonDiffDeletes(prevJson, currJson, usedComparator);
-  return mergeChanges(currJson, changes);
+  return DialogDiff(prevJson, currJson, comparator).deletes;
 }
 
 export function DialogDiffUpdate(prevJson, currJson, comparator?: IComparator): IJSONChangeUpdate[] {
-  const usedComparator = comparator || defaultDialogComparator;
-  const changes = JsonDiffUpdates(prevJson, currJson, usedComparator);
-  return mergeUpdateChanges(prevJson, currJson, changes);
-}
-
-export function DialogDiff(prevJson, currJson, comparator?: IComparator): IJsonChanges {
-  return {
-    adds: DialogDiffAdd(prevJson, currJson, comparator),
-    deletes: DialogDiffDelete(prevJson, currJson, comparator),
-    updates: DialogDiffUpdate(prevJson, currJson, comparator),
-  };
+  return DialogDiff(prevJson, currJson, comparator).updates;
 }

@@ -4,8 +4,8 @@
 import isEqual from 'lodash/isEqual';
 import uniqWith from 'lodash/uniqWith';
 
-import { IJSONChangeAdd, IJSONChangeDelete, IJSONChangeUpdate } from '../jsonDiff/types';
-import { getWithJsonPath, jsonPathParrent, JsonPathStart } from '../jsonDiff/helper';
+import { IJSONChangeAdd, IJSONChangeDelete, IJSONChangeUpdate, IJsonChanges } from '../jsonDiff/types';
+import { getWithJsonPath, jsonPathParrent, JsonPathStart, hasWithJsonPath } from '../jsonDiff/helper';
 
 import { DialogObject } from './types';
 import { isDialogItem } from './comparators';
@@ -21,38 +21,69 @@ function upwardsFindDialogObject(json, path): { path: string; value: DialogObjec
   }
 }
 
-// same as mergeChanges but handle updates
-export function mergeUpdateChanges(prevJson, currJson, changes: IJSONChangeUpdate[]): IJSONChangeUpdate[] {
-  if (!changes.length) return changes;
-  const mergedChanges = changes.map(item => {
-    if (isDialogItem(item.value)) {
-      return item;
-    } else {
-      const { path, value } = upwardsFindDialogObject(currJson, item.path);
-      const preValue = getWithJsonPath(prevJson, path);
-      return { path, value, preValue };
-    }
-  });
-  return uniqWith(mergedChanges, isEqual);
-}
-
 /**
  * if current path's change is not a dialog item, look upwards util a change is on a dialog item.
  * e.g  [{ path: '$.a.name', ...},{ path: '$.a.age', ... } ]
  * --- merge change ---  =>
  * [{ path: '$.a', {name, age, ...} ]
  */
-export function mergeChanges(
-  json,
-  changes: IJSONChangeAdd[] | IJSONChangeDelete[]
-): IJSONChangeAdd[] | IJSONChangeDelete[] {
-  if (!changes.length) return changes;
-  const mergedChanges = changes.map(item => {
+export function convertJsonChanges(prevJson, currJson, changes: IJsonChanges): IJsonChanges {
+  const adds: IJSONChangeAdd[] = [];
+  const deletes: IJSONChangeDelete[] = [];
+  const updates: IJSONChangeUpdate[] = [];
+
+  changes.adds.forEach(item => {
     if (isDialogItem(item.value)) {
-      return item;
+      adds.push(item);
     } else {
-      return upwardsFindDialogObject(json, item.path);
+      const upItem = upwardsFindDialogObject(currJson, item.path);
+      if (hasWithJsonPath(prevJson, upItem.path)) {
+        updates.push({
+          ...upItem,
+          preValue: getWithJsonPath(prevJson, upItem.path),
+        });
+      } else {
+        adds.push(upItem);
+      }
     }
   });
-  return uniqWith(mergedChanges, isEqual);
+
+  changes.deletes.forEach(item => {
+    if (isDialogItem(item.value)) {
+      deletes.push(item);
+    } else {
+      const upItem = upwardsFindDialogObject(currJson, item.path);
+      if (hasWithJsonPath(prevJson, upItem.path)) {
+        updates.push({
+          ...upItem,
+          preValue: getWithJsonPath(prevJson, upItem.path),
+        });
+      } else {
+        deletes.push(upItem);
+      }
+    }
+  });
+
+  changes.updates.forEach(item => {
+    if (isDialogItem(item.value)) {
+      updates.push(item);
+    } else {
+      const upItem = upwardsFindDialogObject(currJson, item.path);
+      const preValue = getWithJsonPath(prevJson, upItem.path);
+      updates.push({
+        ...upItem,
+        preValue,
+      });
+    }
+  });
+
+  const uniqAdds = uniqWith(adds, isEqual);
+  const uniqDeletes = uniqWith(deletes, isEqual);
+  const uniqUpdates = uniqWith(updates, isEqual);
+
+  return {
+    adds: uniqAdds,
+    deletes: uniqDeletes,
+    updates: uniqUpdates,
+  };
 }
