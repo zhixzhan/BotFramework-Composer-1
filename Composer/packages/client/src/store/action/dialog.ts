@@ -42,7 +42,7 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
   });
 };
 
-export const updateVirtualDialog: ActionCreator = async (store, { id, content, prevContent }) => {
+export const updateVirtualDialogBase: ActionCreator = async (store, { id, content, prevContent }) => {
   const state = store.getState();
   const { lgFiles, luFiles, dialogs, locale, schemas } = state;
 
@@ -101,6 +101,18 @@ export const updateVirtualDialog: ActionCreator = async (store, { id, content, p
     },
   });
 };
+
+export const updateVirtualDialog: ActionCreator = undoable(
+  updateVirtualDialogBase,
+  (state: State, args: any[]) => {
+    return args[0];
+  },
+  (store: Store, from, to) => {
+    const { id, content, prevContent } = from;
+    updateVirtualDialogBase(store, { id, content: prevContent, prevContent: content });
+  },
+  (store: Store, from, to) => updateVirtualDialogBase(store, to)
+);
 
 export const updateDialog: ActionCreator = undoable(
   updateDialogBase,
