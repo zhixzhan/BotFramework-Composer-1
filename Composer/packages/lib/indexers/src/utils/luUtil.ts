@@ -160,6 +160,14 @@ export function updateIntent(content: string, intentName: string, intent: LuInte
   }
 }
 
+export function updateIntents(content: string, intents: LuIntentSection[]): string {
+  let newContent = content;
+  intents.forEach((intent) => {
+    newContent = updateIntent(newContent, intent.Name, intent);
+  });
+  return newContent;
+}
+
 /**
  *
  * @param content origin lu file content
@@ -173,6 +181,14 @@ export function addIntent(content: string, { Name, Body, Entities }: LuIntentSec
   }
   // If the invoker doesn't want to carry Entities, don't pass Entities in.
   return updateIntent(content, intentName, { Name, Body, Entities });
+}
+
+export function addIntents(content: string, intents: LuIntentSection[]): string {
+  let newContent = content;
+  intents.forEach((intent) => {
+    newContent = updateIntent(newContent, intent.Name, intent);
+  });
+  return newContent;
 }
 
 /**
@@ -191,4 +207,23 @@ export function removeIntent(content: string, intentName: string): string {
     return new sectionOperator(resource).deleteSection(targetSection.Id).Content;
   }
   return content;
+}
+
+export function removeIntents(content: string, intentNames: string[]): string {
+  let resource = luParser.parse(content);
+  const { Sections } = resource;
+
+  intentNames.forEach((intentName) => {
+    if (intentName.includes('/')) {
+      const content1 = updateIntent(content, intentName, null);
+      resource = luParser.parse(content1);
+    } else {
+      const targetSection = Sections.find(({ Name }) => Name === intentName);
+      if (targetSection) {
+        resource = new sectionOperator(resource).deleteSection(targetSection.Id);
+      }
+    }
+  });
+
+  return resource.Content;
 }

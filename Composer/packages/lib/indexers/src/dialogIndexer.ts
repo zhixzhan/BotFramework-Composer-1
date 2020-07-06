@@ -12,9 +12,10 @@ import {
   LgTemplateJsonPath,
   ReferredLuIntents,
   Diagnostic,
+  JsonWalk,
+  VisitorFunc,
 } from '@bfc/shared';
 
-import { JsonWalk, VisitorFunc } from './utils/jsonWalk';
 import { getBaseName } from './utils/help';
 import ExtractIntentTriggers from './dialogUtils/extractIntentTriggers';
 import { createPath } from './validations/expressionValidation/utils';

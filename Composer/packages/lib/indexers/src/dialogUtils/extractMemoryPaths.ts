@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { SDKKinds } from '@bfc/shared';
+import { SDKKinds, JsonWalk, VisitorFunc } from '@bfc/shared';
 import has from 'lodash/has';
-
-import { VisitorFunc, JsonWalk } from '../utils/jsonWalk';
 
 //limit the scope
 export function checkProperty(property: string): boolean {

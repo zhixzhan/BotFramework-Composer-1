@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import { Diagnostic, MicrosoftIDialog, DialogInfo, LgFile, LuFile } from '@bfc/shared';
+import { Diagnostic, MicrosoftIDialog, DialogInfo, LgFile, LuFile, JsonWalk, VisitorFunc } from '@bfc/shared';
 import { SchemaDefinitions } from '@bfc/shared/lib/schemaUtils/types';
 import has from 'lodash/has';
-
-import { JsonWalk, VisitorFunc } from '..';
 
 import { validateExpressions } from './expressionValidation/index';
 import { ValidateFunc } from './expressionValidation/types';
