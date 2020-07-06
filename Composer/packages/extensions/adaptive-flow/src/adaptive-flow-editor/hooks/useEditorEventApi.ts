@@ -31,9 +31,9 @@ export const useEditorEventApi = (
     deleteSelectedAction,
     deleteSelectedActions,
     updateRecognizer,
-  } = useDialogEditApi(shellApi);
+  } = useDialogEditApi();
   const { createDialog, readDialog, updateDialog } = useDialogApi(shellApi);
-  const { actionsContainLuIntent } = useActionApi(shellApi);
+  const { actionsContainLuIntent } = useActionApi();
   const { path, data, nodeContext, selectionContext } = state;
   const { focusedId, focusedEvent, clipboardActions, dialogFactory } = nodeContext;
   const { selectedIds, setSelectedIds, selectableElements } = selectionContext;

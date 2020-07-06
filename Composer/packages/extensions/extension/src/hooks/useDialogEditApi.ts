@@ -1,21 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { BaseSchema, DialogUtils, ShellApi } from '@bfc/shared';
+import { BaseSchema, DialogUtils } from '@bfc/shared';
 
 import { useActionApi } from './useActionApi';
 
 export interface DialogApiContext {
   copyAction: (actionId: string) => BaseSchema;
-  deleteAction: (actionId: BaseSchema) => BaseSchema;
   copyActions: (actionIds: string[]) => BaseSchema[];
-  deleteActions: (actionIds: BaseSchema[]) => BaseSchema[];
 }
 
 const { appendNodesAfter, queryNodes, insertNodes, deleteNode, deleteNodes } = DialogUtils;
 
-export function useDialogEditApi(shellApi: ShellApi) {
-  const { constructActions, copyActions, deleteAction, deleteActions } = useActionApi(shellApi);
+export function useDialogEditApi() {
+  const { constructActions, copyActions } = useActionApi();
 
   async function insertActions(
     dialogId: string,
@@ -43,14 +41,12 @@ export function useDialogEditApi(shellApi: ShellApi) {
     return appendNodesAfter(dialogData, targetId, newNodes);
   }
 
-  function deleteSelectedAction(dialogId, dialogData, actionId: string) {
-    return deleteNode(dialogData, actionId, (node) => deleteAction(dialogId, node));
+  function deleteSelectedAction(_dialogId, dialogData, actionId: string) {
+    return deleteNode(dialogData, actionId);
   }
 
-  function deleteSelectedActions(dialogId: string, dialogData, actionIds: string[]) {
-    return deleteNodes(dialogData, actionIds, (nodes) => {
-      deleteActions(dialogId, nodes);
-    });
+  function deleteSelectedActions(_dialogId: string, dialogData, actionIds: string[]) {
+    return deleteNodes(dialogData, actionIds);
   }
 
   async function copySelectedActions(dialogId, dialogData, actionIds: string[]) {
