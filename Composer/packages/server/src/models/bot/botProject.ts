@@ -230,7 +230,7 @@ export class BotProject {
       newDesigner = getNewDesigner(name, description);
     }
     content.$designer = newDesigner;
-    const updatedContent = autofixReferInDialog(entryDialogId, JSON.stringify(content, null, 2));
+    const updatedContent = JSON.stringify(autofixReferInDialog(entryDialogId, content));
     await this._updateFile(relativePath, updatedContent);
     // when create/saveAs bot, serialize entry dialog/lg/lu
     const entryPatterns = [
