@@ -6,10 +6,7 @@ import merge from 'lodash/merge';
 
 import { DesignerData } from './types/sdk';
 import { copyAdaptiveAction } from './copyUtils';
-import { deleteAdaptiveAction, deleteAdaptiveActionList } from './deleteUtils';
-import { MicrosoftIDialog, LuIntentSection } from './types';
 import { SDKKinds } from './types';
-import { FieldProcessorAsync } from './copyUtils/ExternalApi';
 import { generateDesignerId } from './generateUniqueId';
 
 interface DesignerAttributes {
@@ -70,7 +67,7 @@ const initialDialogShape = () => ({
     ],
   },
   [SDKKinds.SendActivity]: {
-    activity: '',
+    activity: '- ', // TODO(zhixzhan): investigate more
   },
   [SDKKinds.AttachmentInput]: initialInputDialog,
   [SDKKinds.ChoiceInput]: initialInputDialog,
@@ -89,49 +86,20 @@ export const getDesignerId = (data?: DesignerData) => {
   return newDesigner;
 };
 
-export const deepCopyAction = async (
-  data,
-  copyLgTemplate: FieldProcessorAsync<string>,
-  copyLuIntent: FieldProcessorAsync<LuIntentSection | string | undefined>
-) => {
+export const deepCopyAction = async (data) => {
   return await copyAdaptiveAction(data, {
     getDesignerId,
-    copyLgField: copyLgTemplate,
-    copyLuField: copyLuIntent,
   });
 };
 
-export const deepCopyActions = async (
-  actions: any[],
-  copyLgTemplate: FieldProcessorAsync<string>,
-  copyLuIntent: FieldProcessorAsync<LuIntentSection | string | undefined>
-) => {
-  // NOTES: underlying lg api for writing new lg template to file is not concurrency-safe,
-  //        so we have to call them sequentially
-  // TODO: copy them parralleled via Promise.all() after optimizing lg api.
+export const deepCopyActions = async (actions: any[]) => {
   const copiedActions: any[] = [];
   for (const action of actions) {
     // Deep copy nodes with external resources
-    const copy = await deepCopyAction(action, copyLgTemplate, copyLuIntent);
+    const copy = await deepCopyAction(action);
     copiedActions.push(copy);
   }
   return copiedActions;
-};
-
-export const deleteAction = (
-  data: MicrosoftIDialog,
-  deleteLgTemplates: (templates: string[]) => any,
-  deleteLuIntents: (luIntents: string[]) => any
-) => {
-  return deleteAdaptiveAction(data, deleteLgTemplates, deleteLuIntents);
-};
-
-export const deleteActions = (
-  inputs: MicrosoftIDialog[],
-  deleteLgTemplates: (templates: string[]) => any,
-  deleteLuIntents: (luIntents: string[]) => any
-) => {
-  return deleteAdaptiveActionList(inputs, deleteLgTemplates, deleteLuIntents);
 };
 
 const assignDefaults = (data: {}, currentSeed = {}) => {
