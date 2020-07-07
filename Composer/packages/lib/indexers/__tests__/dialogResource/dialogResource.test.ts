@@ -4,7 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { DialogResource } from '../../src/dialogUtils/dialogResource';
+import { DialogResource } from '../../src/dialogResource';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 

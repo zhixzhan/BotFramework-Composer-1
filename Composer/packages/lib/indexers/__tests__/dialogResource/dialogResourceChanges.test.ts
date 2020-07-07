@@ -6,7 +6,7 @@ import path from 'path';
 
 import { JsonSet, JsonInsert } from '@bfc/shared';
 
-import { DialogResourceChanges } from '../../src/dialogUtils/dialogResourceChanges';
+import { DialogResourceChanges } from '../../src/dialogResource';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
 
