@@ -48,6 +48,7 @@ class Indexer {
 export const indexer = new Indexer();
 
 export * from './dialogIndexer';
+export * from './dialogResource';
 export * from './lgIndexer';
 export * from './luIndexer';
 export * from './utils';

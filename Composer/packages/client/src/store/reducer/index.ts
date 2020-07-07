@@ -227,18 +227,22 @@ const updateLuTemplate: ReducerFunc = (state, luFile: LuFile) => {
   return state;
 };
 
-const updateDialog: ReducerFunc = (state, { id, content }) => {
-  state.dialogs = state.dialogs.map((dialog) => {
-    if (dialog.id === id) {
-      dialog = {
-        ...dialog,
-        ...dialogIndexer.parse(dialog.id, content),
-      };
-      dialog.diagnostics = validateDialog(dialog, state.schemas.sdk.content, state.lgFiles, state.luFiles);
-      return dialog;
-    }
-    return dialog;
-  });
+const updateDialog: ReducerFunc = (state, { dialog, lgFile, luFile }) => {
+  if (dialog)
+    state.dialogs = state.dialogs.map((d) => {
+      if (d.id === dialog.id) return dialog;
+      return d;
+    });
+  if (lgFile)
+    state.lgFiles = state.lgFiles.map((d) => {
+      if (d.id === lgFile.id) return lgFile;
+      return d;
+    });
+  if (luFile)
+    state.luFiles = state.luFiles.map((d) => {
+      if (d.id === luFile.id) return luFile;
+      return d;
+    });
   return state;
 };
 

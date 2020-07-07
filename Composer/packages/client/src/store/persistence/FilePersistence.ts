@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import keys from 'lodash/keys';
+import { ListCompare } from '@bfc/shared';
 
 import { Store, State } from '../types';
 import { setError, fetchProject } from '../action';
@@ -249,7 +250,62 @@ class FilePersistence {
     ];
   }
 
+  private resourceToContent(files: any[], ext: FileExtensions): any[] {
+    return files.map((file) => {
+      const id = `${file.id}${ext}`;
+      const content = ext === FileExtensions.Dialog ? JSON.stringify(file.content, null, 2) : file.content;
+      return {
+        id,
+        content,
+      };
+    });
+  }
+
+  private getResourceFileChanges(previousState: State, currentState: State) {
+    const fileChanges: IFileChange[] = [];
+    const prevResource = [
+      ...this.resourceToContent(previousState.dialogs, FileExtensions.Dialog),
+      ...this.resourceToContent(previousState.lgFiles, FileExtensions.Lg),
+      ...this.resourceToContent(previousState.luFiles, FileExtensions.Lu),
+    ];
+    const currResource = [
+      ...this.resourceToContent(currentState.dialogs, FileExtensions.Dialog),
+      ...this.resourceToContent(currentState.lgFiles, FileExtensions.Lg),
+      ...this.resourceToContent(currentState.luFiles, FileExtensions.Lu),
+    ];
+
+    const { projectId } = currentState;
+
+    const diffs = ListCompare(prevResource, currResource);
+    const { adds, deletes, updates } = diffs;
+
+    for (const {
+      value: { id, content },
+    } of adds) {
+      fileChanges.push({ projectId, id, change: content, type: ChangeType.CREATE });
+    }
+
+    for (const {
+      value: { id, content },
+    } of deletes) {
+      fileChanges.push({ projectId, id, change: content, type: ChangeType.DELETE });
+    }
+
+    for (const {
+      value: { id, content },
+    } of updates) {
+      fileChanges.push({ projectId, id, change: content, type: ChangeType.UPDATE });
+    }
+
+    console.log('FilePersistence changes: ', fileChanges);
+    return fileChanges;
+  }
+
   private getFileChanges(previousState: State, currentState: State, action: ActionType): IFileChange[] {
+    if (action.type === ActionTypes.UPDATE_DIALOG) {
+      return this.getResourceFileChanges(previousState, currentState);
+    }
+
     let fileChanges: IFileChange[] = [];
     const fileChangeType = actionType2ChangeType[action.type];
 
