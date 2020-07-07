@@ -109,6 +109,18 @@ export function updateRegExIntent(dialog: DialogInfo, intent: string, pattern: s
   return dialogCopy;
 }
 
+export const recognizerType = (dialog: any): string | null => {
+  if (dialog?.recognizer) {
+    const { recognizer } = dialog;
+    if (typeof recognizer === 'object' && recognizer.$kind === SDKKinds.RegexRecognizer) {
+      return SDKKinds.RegexRecognizer;
+    } else if (typeof recognizer === 'string') {
+      return SDKKinds.LuisRecognizer;
+    }
+  }
+  return null;
+};
+
 //it is possible that we cannot find a RegEx. Because it will clear all regEx when we
 //switch to another recognizer type
 function deleteRegExIntent(dialog: DialogInfo, intent: string): DialogInfo {

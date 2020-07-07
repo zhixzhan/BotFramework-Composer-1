@@ -11,7 +11,6 @@ import get from 'lodash/get';
 import { DialogFactory, SDKKinds, DialogInfo, PromptTab } from '@bfc/shared';
 import { ActionButton } from 'office-ui-fabric-react/lib/Button';
 import { JsonEditor } from '@bfc/code-editor';
-import { useTriggerApi } from '@bfc/extension';
 
 import { LoadingSpinner } from '../../components/LoadingSpinner/LoadingSpinner';
 import { TestController } from '../../components/TestController/TestController';
@@ -26,7 +25,6 @@ import { ToolBar, IToolBarItem } from '../../components/ToolBar/ToolBar';
 import { clearBreadcrumb } from '../../utils/navigation';
 import undoHistory from '../../store/middlewares/undo/history';
 import { navigateTo } from '../../utils';
-import { useShell } from '../../shell';
 import { useStoreContext } from '../../hooks/useStoreContext';
 
 import { VisualEditorAPI } from './FrameAPI';
@@ -112,8 +110,6 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
   const [dialogJsonVisible, setDialogJsonVisibility] = useState(false);
   const [currentDialog, setCurrentDialog] = useState<DialogInfo>(dialogs[0]);
   const [exportSkillModalVisible, setExportSkillModalVisible] = useState(false);
-  const shell = useShell('ProjectTree');
-  const triggerApi = useTriggerApi(shell.api);
 
   useEffect(() => {
     const currentDialog = dialogs.find(({ id }) => id === dialogId);
@@ -374,7 +370,7 @@ const DesignPage: React.FC<RouteComponentProps<{ dialogId: string; projectId: st
   }
 
   async function handleDeleteTrigger(id, index) {
-    const content = deleteTrigger(dialogs, id, index, (trigger) => triggerApi.deleteTrigger(id, trigger));
+    const content = deleteTrigger(dialogs, id, index);
 
     if (content) {
       await updateDialog({ id, projectId, content });
