@@ -67,7 +67,7 @@ const initialDialogShape = () => ({
     ],
   },
   [SDKKinds.SendActivity]: {
-    activity: '- ', // TODO(zhixzhan): investigate more
+    activity: '', // TODO(zhixzhan): investigate more
   },
   [SDKKinds.AttachmentInput]: initialInputDialog,
   [SDKKinds.ChoiceInput]: initialInputDialog,

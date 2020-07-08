@@ -5,13 +5,13 @@
 
 import { LgTemplate, LuIntentSection } from '@bfc/shared';
 import has from 'lodash/has';
-import { extractLgTemplateRefs, SDKKinds, LgTemplateRef, JsonWalk, VisitorFunc } from '@bfc/shared';
+import { extractLgTemplateRefs, SDKKinds, JsonWalk, VisitorFunc } from '@bfc/shared';
 import { getWithJsonPath } from '@bfc/shared/lib/jsonDiff/helper';
 
 import { getBaseName } from '../utils/help';
 
 import { LGTemplateFields, LUSDKKinds } from './constants';
-import { getContainsLuName, getFeildLgRefName, recognizerType } from './helper';
+import { getContainsLuName, recognizerType } from './helper';
 
 type DialogResourceOptions = {
   lgFileResolver: any;
@@ -60,14 +60,8 @@ export function DialogResource(
             const propValue = value[field];
             let lgName = '';
             const lgTemplateRef = extractLgTemplateRefs(propValue);
-
-            // activity: '' is empty, slot default
-            if (lgTemplateRef.length === 0) {
-              lgName = getFeildLgRefName(value, field);
-              value[field] = new LgTemplateRef(lgName).toString();
-            }
             // activity: "${SendActivity_34235}"
-            else if (lgTemplateRef.length === 1) {
+            if (lgTemplateRef.length === 1) {
               lgName = lgTemplateRef[0].name;
             }
             if (lgName) dialogReferredLGNames.push(lgName);
@@ -85,7 +79,6 @@ export function DialogResource(
 
   const jsonData = path ? getWithJsonPath(dialog, path) : dialog;
   JsonWalk('$', jsonData, visitor);
-
   const lg = allLGTemplates ? allLGTemplates.filter(({ name }) => dialogReferredLGNames.includes(name)) : [];
   const lu = allLUIntents ? allLUIntents.filter(({ Name }) => dialogReferredLUNames.includes(Name)) : [];
 

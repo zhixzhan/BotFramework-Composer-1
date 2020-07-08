@@ -4,6 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import cloneDeep from 'lodash/cloneDeep';
 import { JsonSet, JsonInsert } from '@bfc/shared';
 
 import { DialogResourceChanges } from '../../src/dialogResource';
@@ -46,7 +47,7 @@ const luFileResolver = () => {
 
 describe('Copy/Move dialog action node', () => {
   it('Copy SendActivity', () => {
-    const dialog1 = dialogFile;
+    const dialog1 = cloneDeep(dialogFile);
     const insert1 = [
       {
         path: 'triggers[6].actions[0]',
@@ -63,6 +64,7 @@ describe('Copy/Move dialog action node', () => {
     const dialog2 = JsonInsert(dialog1, insert1);
 
     const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    expect(dialog1).toEqual(dialogFile);
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(1);
     expect(changes.lg.deletes.length).toEqual(0);

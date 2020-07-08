@@ -4,6 +4,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import cloneDeep from 'lodash/cloneDeep';
+
 import { DialogResource } from '../../src/dialogResource';
 import { lgIndexer } from '../../src/lgIndexer';
 import { luIndexer } from '../../src/luIndexer';
@@ -44,7 +46,9 @@ const luFileResolver = () => {
 
 describe('Rsources in dialog', () => {
   it('should find LG/LU resource in dialog', () => {
-    const resources = DialogResource(dialogFile, { lgFileResolver, luFileResolver });
+    const dialog = cloneDeep(dialogFile);
+    const resources = DialogResource(dialog, { lgFileResolver, luFileResolver });
+    expect(dialog).toEqual(dialogFile);
     expect(resources.lg.length).toEqual(5);
     expect(resources.lg[4].name).toEqual('SendActivity_037398');
     expect(resources.lg[4].body).toContain('- Sorry, not sure what you mean. Can you rephrase?');

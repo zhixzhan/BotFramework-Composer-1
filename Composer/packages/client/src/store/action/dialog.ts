@@ -4,6 +4,7 @@ import isEqual from 'lodash/isEqual';
 import { DialogResourceChanges } from '@bfc/indexers/lib/dialogResource';
 import { LgFile, LuFile, SDKKinds, DialogDiff } from '@bfc/shared';
 import { dialogIndexer, validateDialog } from '@bfc/indexers';
+import differenceBy from 'lodash/differenceBy';
 
 import { ActionCreator, State } from '../types';
 import { undoable } from '../middlewares/undo';
@@ -62,7 +63,7 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
 
   console.log('Dialog changes:', dchanges);
 
-  console.log('Reducer changes: ', changes);
+  console.log('Resource changes: ', changes);
 
   let newLgFile;
   let newLuFile;
@@ -70,7 +71,8 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
 
   if (dialogLgFile) {
     let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
-    newContent = lgUtil.addTemplates(newContent, changes.lg.adds);
+    const templateAdds = differenceBy(changes.lg.adds, dialogLgFile.templates, 'name');
+    newContent = lgUtil.addTemplates(newContent, templateAdds);
     newContent = lgUtil.updateTemplates(newContent, changes.lg.updates);
     if (newContent !== dialogLgFile.content) {
       const { templates, diagnostics } = (await LgWorker.parse(dialogLgFile.id, newContent, lgFiles)) as LgFile;
