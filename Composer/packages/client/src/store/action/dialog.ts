@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import isEqual from 'lodash/isEqual';
-import { DialogResourceChanges } from '@bfc/indexers/lib/dialogResource';
+import { DialogResourceChanges, DialogCorrect } from '@bfc/indexers/lib/dialogResource';
 import { LgFile, LuFile, SDKKinds, DialogDiff } from '@bfc/shared';
 import { dialogIndexer, validateDialog } from '@bfc/indexers';
 import differenceBy from 'lodash/differenceBy';
@@ -61,13 +61,14 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
 
   const dchanges = DialogDiff(prevContent, content);
 
+  const correctedContent = DialogCorrect(prevContent, content);
   console.log('Dialog changes:', dchanges);
 
   console.log('Resource changes: ', changes);
 
   let newLgFile;
   let newLuFile;
-  let newDialog;
+  let newDialog = { ...dialogFile, content: correctedContent };
 
   if (dialogLgFile) {
     let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
@@ -92,7 +93,6 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
         newLuFile = { id: dialogLuFile.id, content: newContent, intents, diagnostics };
       }
     } else if (currLuType === SDKKinds.RegexRecognizer && dialogFile) {
-      newDialog = { ...dialogFile };
       for (const intent of changes.lu.updates) {
         const { Name, Body: pattern } = intent;
         newDialog = updateRegExIntent(newDialog, Name, pattern);
@@ -100,11 +100,10 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
     }
   }
 
-  const newDialogContent = newDialog?.content || content;
-  if (dialogFile && !isEqual(newDialogContent, dialogFile.content)) {
+  if (!isEqual(newDialog.content, dialogFile.content)) {
     newDialog = {
       ...dialogFile,
-      ...dialogIndexer.parse(dialogFile.id, content),
+      ...dialogIndexer.parse(dialogFile.id, newDialog.content),
     };
     newDialog.diagnostics = validateDialog(newDialog, state.schemas.sdk.content, state.lgFiles, state.luFiles);
   }

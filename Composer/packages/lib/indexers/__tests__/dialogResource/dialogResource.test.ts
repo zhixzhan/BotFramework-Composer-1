@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 import cloneDeep from 'lodash/cloneDeep';
+import { JsonInsert } from '@bfc/shared';
 
 import { DialogResource } from '../../src/dialogResource';
 import { lgIndexer } from '../../src/lgIndexer';
@@ -52,6 +53,36 @@ describe('Rsources in dialog', () => {
     expect(resources.lg.length).toEqual(5);
     expect(resources.lg[4].name).toEqual('SendActivity_037398');
     expect(resources.lg[4].body).toContain('- Sorry, not sure what you mean. Can you rephrase?');
+    expect(resources.lu.length).toEqual(7);
+    expect(resources.lu[0].Name).toEqual('Add');
+    expect(resources.lu[0].Body).toContain('- Add todo');
+    expect(resources.lu[6].Name).toEqual('ConfirmInput_Response_107784');
+    expect(resources.lu[6].Body).toContain('- yes');
+  });
+
+  it('when copy/paste action, should find LG/LU resource', () => {
+    const dialog = cloneDeep(dialogFile);
+    const insert1 = [
+      {
+        path: 'triggers[7].actions[1]',
+        value: {
+          $kind: 'Microsoft.SendActivity',
+          $designer: {
+            id: 'newid1',
+            name: 'Send a response',
+          },
+          activity: '${SendActivity_037398()}',
+        },
+      },
+    ];
+
+    const dialog2 = JsonInsert(dialog, insert1);
+
+    const resources = DialogResource(dialog2, { lgFileResolver, luFileResolver });
+    expect(dialog).toEqual(dialogFile);
+    expect(resources.lg.length).toEqual(6);
+    expect(resources.lg[5].name).toEqual('SendActivity_newid1');
+    expect(resources.lg[5].body).toContain('- Sorry, not sure what you mean. Can you rephrase?');
     expect(resources.lu.length).toEqual(7);
     expect(resources.lu[0].Name).toEqual('Add');
     expect(resources.lu[0].Body).toContain('- Add todo');

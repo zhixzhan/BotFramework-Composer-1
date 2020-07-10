@@ -11,7 +11,7 @@ import { getWithJsonPath } from '@bfc/shared/lib/jsonDiff/helper';
 import { getBaseName } from '../utils/help';
 
 import { LGTemplateFields, LUSDKKinds } from './constants';
-import { getContainsLuName, recognizerType } from './helper';
+import { getContainsLuName, getFeildLgRefName, recognizerType } from './helper';
 
 type DialogResourceOptions = {
   lgFileResolver: any;
@@ -48,8 +48,8 @@ export function DialogResource(
     allLUIntents = luFileResolver(luFileId)?.intents;
   }
 
-  const dialogReferredLGNames: string[] = [];
-  const dialogReferredLUNames: string[] = [];
+  const lg: LgTemplate[] = [];
+  const lu: LuIntentSection[] = [];
 
   const visitor: VisitorFunc = (_path: string, value: any): boolean => {
     if (has(value, '$kind')) {
@@ -58,20 +58,21 @@ export function DialogResource(
         LGTemplateFields.forEach((field) => {
           if (has(value, field)) {
             const propValue = value[field];
-            let lgName = '';
+            const lgName = getFeildLgRefName(value, field);
             const lgTemplateRef = extractLgTemplateRefs(propValue);
-            // activity: "${SendActivity_34235}"
-            if (lgTemplateRef.length === 1) {
-              lgName = lgTemplateRef[0].name;
-            }
-            if (lgName) dialogReferredLGNames.push(lgName);
+            const refLgName = lgTemplateRef[0]?.name;
+            const targetName = refLgName === lgName ? lgName : refLgName;
+            const template = allLGTemplates.find(({ name }) => targetName === name);
+
+            if (template) lg.push({ ...template, name: lgName });
           }
         });
       }
 
       if (LUSDKKinds.includes($kind)) {
         const luName = getContainsLuName(value);
-        if (luName) dialogReferredLUNames.push(luName);
+        const intent = allLUIntents.find(({ Name }) => luName === Name);
+        if (intent) lu.push(intent);
       }
     }
     return false;
@@ -79,8 +80,6 @@ export function DialogResource(
 
   const jsonData = path ? getWithJsonPath(dialog, path) : dialog;
   JsonWalk('$', jsonData, visitor);
-  const lg = allLGTemplates ? allLGTemplates.filter(({ name }) => dialogReferredLGNames.includes(name)) : [];
-  const lu = allLUIntents ? allLUIntents.filter(({ Name }) => dialogReferredLUNames.includes(Name)) : [];
 
   return { lg, lu };
 }

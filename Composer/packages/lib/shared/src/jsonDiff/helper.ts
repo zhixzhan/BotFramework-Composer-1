@@ -7,6 +7,10 @@ import { JSONPath } from 'jsonpath-plus';
 
 export const JsonPathStart = '$';
 
+export function JsonPathToObjectPath(path) {
+  return path.startsWith(JsonPathStart) ? path.replace(/^\$\.?/, '') : path;
+}
+
 export function getWithJsonPath(json, path) {
   if (path === JsonPathStart) return json;
   const result = JSONPath({ path, json });
@@ -27,16 +31,18 @@ export function jsonPathParrent(path: string): string {
 }
 
 export function JsonSet(origin: any, updates: { path: string; value: any }[]) {
-  return updates.reduce((origin, currentItem) => {
+  return updates.reduce((result, currentItem) => {
     const { path, value } = currentItem;
-    return set(origin, path, value);
+    const lodashPath = JsonPathToObjectPath(path);
+    return set(result, lodashPath, value);
   }, cloneDeep(origin));
 }
 
 export function JsonInsert(origin: any, updates: { path: string; value: any }[]) {
   return updates.reduce((origin, currentItem) => {
     const { path, value } = currentItem;
-    const matched = path.match(/(.*)\[(\d+)\]$/);
+    const lodashPath = JsonPathToObjectPath(path);
+    const matched = lodashPath.match(/(.*)\[(\d+)\]$/);
     if (!matched) throw new Error('insert path must in an array, e.g [1]');
     const [, insertListPath, insertIndex] = matched;
     const insertListValue = insertListPath ? get(origin, insertListPath) : origin;
