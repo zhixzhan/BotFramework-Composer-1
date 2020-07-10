@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash/cloneDeep';
 
 import { JsonWalk, VisitorFunc } from '../jsonWalk';
 
@@ -69,7 +70,7 @@ export function JsonDiffAdds(prevJson, currJson, comparator?: IComparator): IJSO
   };
 
   JsonWalk(JsonPathStart, currJson, visitor);
-  return results;
+  return cloneDeep(results);
 }
 
 export function JsonDiffDeletes(prevJson, currJson, comparator?: IComparator): IJSONChangeDelete[] {
@@ -107,7 +108,7 @@ export function JsonDiffUpdates(prevJson, currJson, comparator?: IComparator): I
   };
 
   JsonWalk(JsonPathStart, currJson, visitor);
-  return results;
+  return cloneDeep(results);
 }
 
 /**
