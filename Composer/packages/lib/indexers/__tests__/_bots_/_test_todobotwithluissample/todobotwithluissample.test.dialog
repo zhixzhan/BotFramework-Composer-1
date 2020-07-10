@@ -251,6 +251,20 @@
             "name": "Send a response"
           },
           "activity": "${SendActivity_037398()}"
+        },
+        {
+          "$kind": "Microsoft.TextInput",
+          "$designer": {
+            "id": "udC5pZ"
+          },
+          "disabled": false,
+          "maxTurnCount": 3,
+          "alwaysPrompt": false,
+          "allowInterruptions": false,
+          "prompt": "${TextInput_Prompt_udC5pZ()}",
+          "unrecognizedPrompt": "${TextInput_UnrecognizedPrompt_udC5pZ()}",
+          "invalidPrompt": "${TextInput_InvalidPrompt_udC5pZ()}",
+          "defaultValueResponse": "${TextInput_DefaultValueResponse_udC5pZ()}"
         }
       ]
     }

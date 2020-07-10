@@ -4,6 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import get from 'lodash/get';
 import cloneDeep from 'lodash/cloneDeep';
 import { JsonSet, JsonInsert } from '@bfc/shared';
 
@@ -96,43 +97,36 @@ describe('Copy/Move dialog action node', () => {
     expect(changes.lu.deletes.length).toEqual(0);
   });
 
-  // it('Copy TextInput, contains LG/LU should be added', () => {
-  //   const dialog1 = dialogFile;
+  it('Copy TextInput, contains LG/LU should be added', () => {
+    const dialog1 = dialogFile;
+    const textPromptNode = get(dialog1, 'triggers[7].actions[1]');
 
-  //   const insert1 = [
-  //     {
-  //       path: 'triggers[6].actions[0]',
-  //       value: {
-  //         $kind: 'Microsoft.TextInput',
-  //         $designer: {
-  //           id: '96TcCU',
-  //         },
-  //         allowInterruptions: false,
-  //         alwaysPrompt: false,
-  //         prompt: '${TextInput_Prompt_96TcCU()}',
-  //         unrecognizedPrompt: '${TextInput_UnrecognizedPrompt_96TcCU()}',
-  //         invalidPrompt: '${TextInput_InvalidPrompt_96TcCU()}',
-  //         defaultValueResponse: '${TextInput_DefaultValueResponse_96TcCU()}',
-  //         disabled: false,
-  //         maxTurnCount: 3,
-  //       },
-  //     },
-  //   ];
+    const insert1 = [
+      {
+        path: 'triggers[7].actions[0]',
+        value: {
+          ...textPromptNode,
+          $designer: {
+            id: 'NEWID1',
+          },
+        },
+      },
+    ];
 
-  //   const dialog2 = JsonInsert(dialog1, insert1);
+    const dialog2 = JsonInsert(dialog1, insert1);
 
-  //   const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
-  //   expect(changes.lg.updates.length).toEqual(0);
-  //   expect(changes.lg.adds.length).toEqual(4);
-  //   expect(changes.lg.deletes.length).toEqual(0);
-  //   expect(changes.lg.adds[0].name).toEqual('TextInput_DefaultValueResponse_96TcCU');
-  //   expect(changes.lg.adds[0].body).toEqual('- 6');
-  //   expect(changes.lu.updates.length).toEqual(0);
-  //   expect(changes.lu.adds.length).toEqual(1);
-  //   expect(changes.lu.adds[0].Name).toEqual('TextInput_Response_96TcCU');
-  //   expect(changes.lu.adds[0].Body).toEqual('-23');
-  //   expect(changes.lu.deletes.length).toEqual(0);
-  // });
+    const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    expect(changes.lg.updates.length).toEqual(0);
+    expect(changes.lg.adds.length).toEqual(4);
+    expect(changes.lg.deletes.length).toEqual(0);
+    expect(changes.lg.adds[0].name).toEqual('TextInput_DefaultValueResponse_96TcCU');
+    expect(changes.lg.adds[0].body).toEqual('- 6');
+    expect(changes.lu.updates.length).toEqual(0);
+    expect(changes.lu.adds.length).toEqual(1);
+    expect(changes.lu.adds[0].Name).toEqual('TextInput_Response_96TcCU');
+    expect(changes.lu.adds[0].Body).toEqual('-23');
+    expect(changes.lu.deletes.length).toEqual(0);
+  });
 
   it('Move ConfirmInput, origin contains LG/LU should be deleted', () => {
     const dialog1 = dialogFile;

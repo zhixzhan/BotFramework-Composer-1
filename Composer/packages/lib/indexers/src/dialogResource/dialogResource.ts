@@ -5,6 +5,7 @@
 
 import { LgTemplate, LuIntentSection } from '@bfc/shared';
 import has from 'lodash/has';
+import isEmpty from 'lodash/isEmpty';
 import { extractLgTemplateRefs, SDKKinds, JsonWalk, VisitorFunc } from '@bfc/shared';
 import { getWithJsonPath } from '@bfc/shared/lib/jsonDiff/helper';
 
@@ -69,7 +70,7 @@ export function DialogResource(
         });
       }
 
-      if (LUSDKKinds.includes($kind)) {
+      if (!isEmpty(allLUIntents) && LUSDKKinds.includes($kind)) {
         const luName = getContainsLuName(value);
         const intent = allLUIntents.find(({ Name }) => luName === Name);
         if (intent) lu.push(intent);

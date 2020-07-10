@@ -22,4 +22,13 @@
 - No worries.
 
 # SendActivity_037398()
-- Sorry, not sure what you mean. Can you rephrase? 
+- Sorry, not sure what you mean. Can you rephrase?
+
+# TextInput_Prompt_udC5pZ()
+- 1
+# TextInput_UnrecognizedPrompt_udC5pZ()
+- 2
+# TextInput_InvalidPrompt_udC5pZ()
+- 3
+# TextInput_DefaultValueResponse_udC5pZ()
+- 4

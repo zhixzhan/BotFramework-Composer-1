@@ -56,30 +56,30 @@
 > entity definitions
 @ ml itemTitle
 
-@ list listType = 
+@ list listType =
 	- todo :
 	      - to do
             - todos
-            - laundry            
+            - laundry
       - grocery :
             - groceries
             - fruits
             - vegetables
             - household items
             - house hold items
-      - shopping : 
-            - shopping 
+      - shopping :
+            - shopping
             - shop
             - shoppers
 
 > phrase list definitions
-@ phraseList addItem(interchangeable) = 
+@ phraseList addItem(interchangeable) =
 	- add
 	- put
 	- plus
 
 
-> 
+>
 
 
 
@@ -154,7 +154,7 @@
 @ ml itemTitle
 
 > phrase list definitions
-@ phraseList deleteItem(interchangeable) = 
+@ phraseList deleteItem(interchangeable) =
 	- remove
 	- delete
 	- get
@@ -218,8 +218,8 @@
 - yes
 - no
 
-@ list confirmation = 
-    - yes : 
+@ list confirmation =
+    - yes :
 		    - yeah
 		    - ok
 		    - yup
@@ -227,4 +227,8 @@
         - nope
         - not now
         - not really
-        - go back               
+        - go back
+
+
+# TextInput_Response_udC5pZ
+- what did you say?
