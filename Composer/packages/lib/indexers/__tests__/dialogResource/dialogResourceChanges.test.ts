@@ -69,8 +69,36 @@ describe('Copy/Move dialog action node', () => {
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(1);
     expect(changes.lg.deletes.length).toEqual(0);
-    expect(changes.lg.adds[0].name).toEqual('SendActivity_202664');
     expect(changes.lg.adds[0].body).toContain('[Activity');
+    expect(changes.lu.updates.length).toEqual(0);
+    expect(changes.lu.adds.length).toEqual(0);
+    expect(changes.lu.deletes.length).toEqual(0);
+  });
+
+  it('Copy SendActivity with same id', () => {
+    const dialog1 = cloneDeep(dialogFile);
+    const insert1 = [
+      {
+        path: 'triggers[7].actions[0]',
+        value: {
+          $kind: 'Microsoft.SendActivity',
+          $designer: {
+            id: '037398',
+            name: 'Send a response',
+          },
+          activity: '${SendActivity_037398()}',
+        },
+      },
+    ];
+
+    const dialog2 = JsonInsert(dialog1, insert1);
+
+    const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    expect(dialog1).toEqual(dialogFile);
+    expect(changes.lg.updates.length).toEqual(0);
+    expect(changes.lg.adds.length).toEqual(1);
+    expect(changes.lg.deletes.length).toEqual(0);
+    expect(changes.lg.adds[0].body).toContain('- Sorry, not sure what you mean. Can you rephrase?');
     expect(changes.lu.updates.length).toEqual(0);
     expect(changes.lu.adds.length).toEqual(0);
     expect(changes.lu.deletes.length).toEqual(0);
@@ -91,10 +119,10 @@ describe('Copy/Move dialog action node', () => {
     const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(0);
-    expect(changes.lg.deletes.length).toEqual(1);
+    expect(changes.lg.deletes.length).toEqual(5);
     expect(changes.lu.updates.length).toEqual(0);
     expect(changes.lu.adds.length).toEqual(0);
-    expect(changes.lu.deletes.length).toEqual(0);
+    expect(changes.lu.deletes.length).toEqual(1);
   });
 
   it('Copy TextInput, contains LG/LU should be added', () => {
@@ -104,12 +132,7 @@ describe('Copy/Move dialog action node', () => {
     const insert1 = [
       {
         path: 'triggers[7].actions[0]',
-        value: {
-          ...textPromptNode,
-          $designer: {
-            id: 'NEWID1',
-          },
-        },
+        value: textPromptNode,
       },
     ];
 
@@ -119,12 +142,8 @@ describe('Copy/Move dialog action node', () => {
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(4);
     expect(changes.lg.deletes.length).toEqual(0);
-    expect(changes.lg.adds[0].name).toEqual('TextInput_DefaultValueResponse_96TcCU');
-    expect(changes.lg.adds[0].body).toEqual('- 6');
     expect(changes.lu.updates.length).toEqual(0);
     expect(changes.lu.adds.length).toEqual(1);
-    expect(changes.lu.adds[0].Name).toEqual('TextInput_Response_96TcCU');
-    expect(changes.lu.adds[0].Body).toEqual('-23');
     expect(changes.lu.deletes.length).toEqual(0);
   });
 

@@ -46,14 +46,34 @@ const luFileResolver = () => {
 };
 
 describe('Rsources in dialog', () => {
+  it('should find LG/LU resource in part of dialog', () => {
+    const dialog1 = [
+      {
+        $kind: 'Microsoft.SendActivity',
+        $designer: {
+          id: '037398',
+          name: 'Send a response',
+        },
+        activity: '${SendActivity_037398()}',
+      },
+    ];
+
+    const resources = DialogResource(dialog1, { lgFileResolver, luFileResolver });
+
+    expect(resources.lg.length).toEqual(1);
+    expect(resources.lg[0].name).toEqual('SendActivity_037398');
+    expect(resources.lg[0].body).toContain('- Sorry, not sure what you mean. Can you rephrase?');
+    expect(resources.lu.length).toEqual(0);
+  });
+
   it('should find LG/LU resource in dialog', () => {
     const dialog = cloneDeep(dialogFile);
     const resources = DialogResource(dialog, { lgFileResolver, luFileResolver });
     expect(dialog).toEqual(dialogFile);
-    expect(resources.lg.length).toEqual(5);
+    expect(resources.lg.length).toEqual(9);
     expect(resources.lg[4].name).toEqual('SendActivity_037398');
     expect(resources.lg[4].body).toContain('- Sorry, not sure what you mean. Can you rephrase?');
-    expect(resources.lu.length).toEqual(7);
+    expect(resources.lu.length).toEqual(8);
     expect(resources.lu[0].Name).toEqual('Add');
     expect(resources.lu[0].Body).toContain('- Add todo');
     expect(resources.lu[6].Name).toEqual('ConfirmInput_Response_107784');
@@ -68,7 +88,7 @@ describe('Rsources in dialog', () => {
         value: {
           $kind: 'Microsoft.SendActivity',
           $designer: {
-            id: 'newid1',
+            id: '037398',
             name: 'Send a response',
           },
           activity: '${SendActivity_037398()}',
@@ -80,10 +100,10 @@ describe('Rsources in dialog', () => {
 
     const resources = DialogResource(dialog2, { lgFileResolver, luFileResolver });
     expect(dialog).toEqual(dialogFile);
-    expect(resources.lg.length).toEqual(6);
-    expect(resources.lg[5].name).toEqual('SendActivity_newid1');
+    expect(resources.lg.length).toEqual(10);
+    expect(resources.lg[5].name).toEqual('SendActivity_037398');
     expect(resources.lg[5].body).toContain('- Sorry, not sure what you mean. Can you rephrase?');
-    expect(resources.lu.length).toEqual(7);
+    expect(resources.lu.length).toEqual(8);
     expect(resources.lu[0].Name).toEqual('Add');
     expect(resources.lu[0].Body).toContain('- Add todo');
     expect(resources.lu[6].Name).toEqual('ConfirmInput_Response_107784');

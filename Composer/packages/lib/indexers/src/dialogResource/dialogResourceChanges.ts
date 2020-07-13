@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
+import set from 'lodash/set';
 import { DialogDiff, ListCompare } from '@bfc/shared';
+import { JsonPathToObjectPath } from '@bfc/shared/lib/jsonDiff/helper';
 
 import { IResourceChanges, ILUResourceChanges, ILGResourceChanges } from './types';
 import { DialogResource } from './dialogResource';
+import { copyAdaptiveNodes } from './copyAdaptiveNodes';
 
 function lgListResourceChanges(list1, list2): ILGResourceChanges {
   const changes = ListCompare(list1, list2);
@@ -80,9 +82,13 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
   for (const item of adds) {
     const { path } = item;
 
+    const copiedResource = copyAdaptiveNodes(dialog2, { lgFileResolver, luFileResolver, path });
+    // in-place modify dialog2. or maybe not?
+    set(dialog2, JsonPathToObjectPath(path), copiedResource.newNodes);
+
     const { lg, lu } = DialogResource(dialog2, { lgFileResolver, luFileResolver, path });
-    changes.lg.adds.push(...lg);
-    changes.lu.adds.push(...lu);
+    changes.lg.adds.push(...lg, ...copiedResource.lg);
+    changes.lu.adds.push(...lu, ...copiedResource.lu);
   }
 
   return changes;
