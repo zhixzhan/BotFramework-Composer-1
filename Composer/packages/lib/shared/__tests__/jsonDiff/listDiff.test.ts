@@ -8,8 +8,72 @@ import isEqual from 'lodash/isEqual';
 import { IComparator } from '../../src/jsonDiff/types';
 import { JsonSet, JsonInsert } from '../../src/jsonDiff/helper';
 import { ListDiff } from '../../src/jsonDiff/listDiff';
+import { uniqList } from '../../src/jsonDiff/listCompare';
+
+describe('list diff convert uniq list', () => {
+  it('should convert number list to uniq', () => {
+    const list1 = [1, 2, 3];
+    const list2 = [1, 2, 3, 1];
+    const list1uq = uniqList(list1);
+    const list2uq = uniqList(list2);
+    expect(list1uq.length).toEqual(3);
+    expect(list2uq.length).toEqual(4);
+    expect(list2uq[3]).toEqual({
+      index: 2,
+      value: 1,
+    });
+  });
+});
 
 describe('list diff for number list', () => {
+  it('should get changes in number list, add duplicate item', () => {
+    // add dulplicate item
+    const changes1 = ListDiff([1, 2, 3], [1, 2, 3, 1]);
+    expect(changes1.adds[0].path).toEqual('[3]');
+    expect(changes1.adds[0].value).toEqual(1);
+    expect(changes1.adds.length).toEqual(1);
+    expect(changes1.deletes.length).toEqual(0);
+    expect(changes1.updates.length).toEqual(0);
+
+    const changes2 = ListDiff([1, 2, 3], [1, 2, 2, 3]);
+    expect(changes2.adds[0].path).toEqual('[2]');
+    expect(changes2.adds[0].value).toEqual(2);
+    expect(changes2.adds.length).toEqual(1);
+    expect(changes2.deletes.length).toEqual(0);
+    expect(changes2.updates.length).toEqual(0);
+
+    const changes3 = ListDiff([1, 2, 3], [1, 1, 2, 3]);
+    expect(changes3.adds[0].path).toEqual('[1]');
+    expect(changes3.adds[0].value).toEqual(1);
+    expect(changes3.adds.length).toEqual(1);
+    expect(changes3.deletes.length).toEqual(0);
+    expect(changes3.updates.length).toEqual(0);
+  });
+
+  it('should get changes in number list, delete duplicate item', () => {
+    // delete dulplicate item
+    const changes1 = ListDiff([1, 2, 3, 3], [1, 2, 3]);
+    expect(changes1.deletes[0].path).toEqual('[3]');
+    expect(changes1.deletes[0].value).toEqual(3);
+    expect(changes1.deletes.length).toEqual(1);
+    expect(changes1.adds.length).toEqual(0);
+    expect(changes1.updates.length).toEqual(0);
+
+    const changes2 = ListDiff([1, 2, 2, 3], [1, 2, 3]);
+    expect(changes2.deletes[0].path).toEqual('[2]');
+    expect(changes2.deletes[0].value).toEqual(2);
+    expect(changes2.deletes.length).toEqual(1);
+    expect(changes2.adds.length).toEqual(0);
+    expect(changes2.updates.length).toEqual(0);
+
+    const changes3 = ListDiff([1, 1, 2, 3], [1, 2, 3]);
+    expect(changes3.deletes[0].path).toEqual('[1]');
+    expect(changes3.deletes[0].value).toEqual(1);
+    expect(changes3.deletes.length).toEqual(1);
+    expect(changes3.adds.length).toEqual(0);
+    expect(changes3.updates.length).toEqual(0);
+  });
+
   it('should get changes in number list, update', () => {
     // update
     const changes1 = ListDiff([1, 2, 3], [1, 2, 4]);

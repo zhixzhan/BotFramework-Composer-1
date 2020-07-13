@@ -27,9 +27,7 @@ import { ListCompare } from './listCompare';
  */
 
 /**
- * diff with key
- * Assume list1, list2 both are uniqed list.
- * @param list1 {[key:string]: any}
+ * @param list1
  * @param list2
  * @param comparator // value comparator
  */

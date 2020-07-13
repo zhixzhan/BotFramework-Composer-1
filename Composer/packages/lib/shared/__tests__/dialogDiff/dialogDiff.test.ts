@@ -11,6 +11,30 @@ import { JsonInsert, JsonSet } from '../../src/jsonDiff';
 const baseDialog = JSON.parse(fs.readFileSync(`${__dirname}/a.dialog`, 'utf-8'));
 
 describe('dialog diff', () => {
+  it('check action copy/paste', () => {
+    const inserts1 = [
+      // pasted value has same id
+      {
+        path: 'triggers[7].actions[1]',
+        value: {
+          $kind: 'Microsoft.SendActivity',
+          $designer: {
+            id: '677448',
+          },
+          activity: 'Hi! I\'m a ToDo bot. Say "add a todo named first" to get started.',
+        },
+      },
+    ];
+
+    const dialog1 = JsonInsert(baseDialog, inserts1);
+    const changes1 = DialogDiff(baseDialog, dialog1);
+    expect(changes1.adds.length).toEqual(1);
+    expect(changes1.deletes.length).toEqual(0);
+    expect(changes1.updates.length).toEqual(0);
+    expect(changes1.adds[0].path).toEqual(`$.${inserts1[0].path}`);
+    expect(changes1.adds[0].value).toEqual(inserts1[0].value);
+  });
+
   it('check action adds', () => {
     const inserts1 = [
       // insert at list start
@@ -189,7 +213,7 @@ describe('dialog diff', () => {
         value: {
           $kind: 'Microsoft.OnIntent',
           $designer: {
-            id: 'X-Xce_',
+            id: 'X1Xce1',
           },
           intent: 'FooIntent',
         },
@@ -213,7 +237,7 @@ describe('dialog diff', () => {
         value: {
           $kind: 'Microsoft.OnIntent',
           $designer: {
-            id: 'X-Xce_',
+            id: 'X1Xce1',
           },
           intent: 'FooIntent',
         },
