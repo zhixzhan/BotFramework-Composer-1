@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import set from 'lodash/set';
+
 import { DialogDiff, ListCompare } from '@bfc/shared';
-import { JsonPathToObjectPath } from '@bfc/shared/lib/jsonDiff/helper';
 
 import { IResourceChanges, ILUResourceChanges, ILGResourceChanges } from './types';
 import { DialogResource } from './dialogResource';
@@ -46,6 +45,11 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
       deletes: [],
       updates: [],
     },
+    dialog: {
+      adds: [],
+      deletes: [],
+      updates: [],
+    },
   } as IResourceChanges;
   // find all in dialog1, treat as `adds`
   if (!dialog2) {
@@ -56,6 +60,8 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
   }
 
   const { adds, deletes, updates } = DialogDiff(dialog1, dialog2);
+  changes.dialog.deletes.push(...deletes);
+  changes.dialog.updates.push(...updates);
   for (const item of updates) {
     const { path } = item;
     const { lg: prevLg, lu: prevLu } = DialogResource(dialog1, { lgFileResolver, luFileResolver, path });
@@ -83,12 +89,9 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
     const { path } = item;
 
     const copiedResource = copyAdaptiveNodes(dialog2, { lgFileResolver, luFileResolver, path });
-    // in-place modify dialog2. or maybe not?
-    set(dialog2, JsonPathToObjectPath(path), copiedResource.newNodes);
-
-    const { lg, lu } = DialogResource(dialog2, { lgFileResolver, luFileResolver, path });
-    changes.lg.adds.push(...lg, ...copiedResource.lg);
-    changes.lu.adds.push(...lu, ...copiedResource.lu);
+    changes.dialog.adds.push({ path, value: copiedResource.newNodes });
+    changes.lg.adds.push(...copiedResource.lg);
+    changes.lu.adds.push(...copiedResource.lu);
   }
 
   return changes;

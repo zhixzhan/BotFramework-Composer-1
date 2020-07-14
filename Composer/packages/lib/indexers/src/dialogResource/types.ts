@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { LgTemplate, LuIntentSection } from '@bfc/shared';
+import { LgTemplate, LuIntentSection, IJSONChangeAdd, IJSONChangeDelete, IJSONChangeUpdate } from '@bfc/shared';
 
 export interface ILGResourceChanges {
   adds: LgTemplate[];
@@ -15,7 +15,14 @@ export interface ILUResourceChanges {
   updates: LuIntentSection[];
 }
 
+export interface IDialogNodesChanges {
+  adds: IJSONChangeAdd[];
+  deletes: IJSONChangeDelete[];
+  updates: IJSONChangeUpdate[];
+}
+
 export interface IResourceChanges {
   lg: ILGResourceChanges;
   lu: ILUResourceChanges;
+  dialog: IDialogNodesChanges;
 }
