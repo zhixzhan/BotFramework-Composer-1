@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import clonedeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash/cloneDeep';
 import { LuFile } from '@bfc/shared';
 
 import * as luUtil from '../../utils/luUtil';
@@ -38,14 +38,17 @@ export const createLuFile: ActionCreator = async (store, { id, content }) => {
 export const undoableUpdateLuFile = undoable(
   updateLuFile,
   (state: State, args: any[], isEmpty) => {
+    const restoreArgs: any[] = [cloneDeep(state)];
+
     if (isEmpty) {
       const id = args[0].id;
       const projectId = args[0].projectId;
-      const content = clonedeep(state.luFiles.find((luFile) => luFile.id === id)?.content);
-      return [{ id, projectId, content }];
+      const content = cloneDeep(state.luFiles.find((luFile) => luFile.id === id)?.content);
+      restoreArgs.unshift({ id, content, projectId });
     } else {
-      return args;
+      restoreArgs.unshift(...args);
     }
+    return restoreArgs;
   },
   async (store: Store, from, to) => updateLuFile(store, ...to),
   async (store: Store, from, to) => updateLuFile(store, ...to)

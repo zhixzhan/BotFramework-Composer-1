@@ -5,7 +5,6 @@ import { JSONSchema7 } from 'json-schema';
 import merge from 'lodash/merge';
 
 import { DesignerData } from './types/sdk';
-import { copyAdaptiveAction } from './copyUtils';
 import { SDKKinds } from './types';
 import { generateDesignerId } from './generateUniqueId';
 
@@ -67,7 +66,7 @@ const initialDialogShape = () => ({
     ],
   },
   [SDKKinds.SendActivity]: {
-    activity: '', // TODO(zhixzhan): investigate more
+    // activity: '', // TODO(zhixzhan): investigate more
   },
   [SDKKinds.AttachmentInput]: initialInputDialog,
   [SDKKinds.ChoiceInput]: initialInputDialog,
@@ -84,22 +83,6 @@ export const getDesignerId = (data?: DesignerData) => {
   };
 
   return newDesigner;
-};
-
-export const deepCopyAction = async (data) => {
-  return await copyAdaptiveAction(data, {
-    getDesignerId,
-  });
-};
-
-export const deepCopyActions = async (actions: any[]) => {
-  const copiedActions: any[] = [];
-  for (const action of actions) {
-    // Deep copy nodes with external resources
-    const copy = await deepCopyAction(action);
-    copiedActions.push(copy);
-  }
-  return copiedActions;
 };
 
 const assignDefaults = (data: {}, currentSeed = {}) => {

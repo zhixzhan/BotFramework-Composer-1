@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 import isEqual from 'lodash/isEqual';
-import { DialogResourceChanges, DialogCorrect } from '@bfc/indexers/lib/dialogResource';
-import { LgFile, LuFile, SDKKinds, DialogDiff } from '@bfc/shared';
+import isEmpty from 'lodash/isEmpty';
+import cloneDeep from 'lodash/cloneDeep';
+import { DialogResourceChanges } from '@bfc/indexers/lib/dialogResource';
+import { LgFile, LuFile, SDKKinds, JsonSet } from '@bfc/shared';
 import { dialogIndexer, validateDialog } from '@bfc/indexers';
 import differenceBy from 'lodash/differenceBy';
 
@@ -35,17 +37,19 @@ export const createDialog: ActionCreator = async (store, { id, content }) => {
   });
 };
 
-export const updateDialogBase: ActionCreator = async (store, { id, content }) => {
+export const updateDialogBase: ActionCreator = async (store, { id, content }, lastState) => {
   const state = store.getState();
   const { lgFiles, luFiles, dialogs, locale } = state;
 
   const lgFileResolver = function (id: string) {
     const fileId = id.includes('.') ? id : `${id}.${locale}`;
-    return lgFiles.find(({ id }) => id === fileId);
+    const files = lastState?.lgFiles ?? lgFiles;
+    return files.find(({ id }) => id === fileId);
   };
   const luFileResolver = function (id: string) {
     const fileId = id.includes('.') ? id : `${id}.${locale}`;
-    return luFiles.find(({ id }) => id === fileId);
+    const files = lastState?.luFiles ?? luFiles;
+    return files.find(({ id }) => id === fileId);
   };
 
   const dialogFile = dialogs.find((f) => f.id === id);
@@ -59,16 +63,13 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }) =>
   const prevContent = dialogFile.content;
   const changes = DialogResourceChanges(prevContent, content, { lgFileResolver, luFileResolver });
 
-  const dchanges = DialogDiff(prevContent, content);
-
-  const correctedContent = DialogCorrect(prevContent, content);
-  console.log('Dialog changes:', dchanges);
-
   console.log('Resource changes: ', changes);
+
+  const newDialogContent = isEmpty(changes.dialog.adds) ? content : JsonSet(content, changes.dialog.adds);
 
   let newLgFile;
   let newLuFile;
-  let newDialog = { ...dialogFile, content: correctedContent };
+  let newDialog = { ...dialogFile, content: newDialogContent };
 
   if (dialogLgFile) {
     let newContent = lgUtil.removeTemplates(dialogLgFile.content, changes.lg.deletes);
@@ -128,13 +129,15 @@ export const updateDialogBase0: ActionCreator = async (store, { id, content }) =
 export const updateDialog: ActionCreator = undoable(
   updateDialogBase,
   (state: State, args: any[], isEmpty) => {
+    const restoreArgs: any[] = [cloneDeep(state)];
     if (isEmpty) {
       const id = state.designPageLocation.dialogId;
       const dialog = state.dialogs.find((dialog) => dialog.id === id);
-      return [{ id, content: dialog ? dialog.content : {} }];
+      restoreArgs.unshift({ id, content: dialog ? dialog.content : {} });
     } else {
-      return args;
+      restoreArgs.unshift(...args);
     }
+    return restoreArgs;
   },
   (store: Store, from, to) => updateDialogBase(store, ...to),
   (store: Store, from, to) => updateDialogBase(store, ...to)

@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { BaseSchema, deepCopyActions, walkAdaptiveActionList } from '@bfc/shared';
+import { BaseSchema, walkAdaptiveActionList } from '@bfc/shared';
+import cloneDeep from 'lodash/cloneDeep';
 
 export const useActionApi = () => {
   const luFieldName = '_lu';
@@ -17,11 +18,11 @@ export const useActionApi = () => {
   }
 
   async function constructActions(dialogId: string, actions: BaseSchema[]) {
-    return deepCopyActions(actions);
+    return cloneDeep(actions);
   }
 
   async function copyActions(dialogId: string, actions: BaseSchema[]) {
-    return deepCopyActions(actions);
+    return cloneDeep(actions);
   }
 
   async function constructAction(dialogId: string, action: BaseSchema) {

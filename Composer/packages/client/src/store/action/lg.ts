@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-import clonedeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash/cloneDeep';
 import { LgFile } from '@bfc/shared';
 
 import { ActionTypes } from '../../constants';
@@ -33,14 +33,17 @@ export const removeLgFile: ActionCreator = async (store, id) => {
 export const undoableUpdateLgFile = undoable(
   updateLgFile,
   (state: State, args: any[], isEmpty) => {
+    const restoreArgs: any[] = [cloneDeep(state)];
+
     if (isEmpty) {
       const id = args[0].id;
       const projectId = args[0].projectId;
-      const content = clonedeep(state.lgFiles.find((lgFile) => lgFile.id === id)?.content);
-      return [{ id, content, projectId }];
+      const content = cloneDeep(state.lgFiles.find((lgFile) => lgFile.id === id)?.content);
+      restoreArgs.unshift({ id, content, projectId });
     } else {
-      return args;
+      restoreArgs.unshift(...args);
     }
+    return restoreArgs;
   },
   async (store: Store, from, to) => updateLgFile(store, ...to),
   async (store: Store, from, to) => updateLgFile(store, ...to)
