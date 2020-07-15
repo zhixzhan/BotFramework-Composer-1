@@ -3,20 +3,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { LgTemplate, LuIntentSection } from '@bfc/shared';
+import { LgTemplate, LuIntentSection, LgFile, LuFile } from '@bfc/shared';
 import has from 'lodash/has';
 import isEmpty from 'lodash/isEmpty';
 import { extractLgTemplateRefs, SDKKinds, JsonWalk, VisitorFunc } from '@bfc/shared';
 import { getWithJsonPath } from '@bfc/shared/lib/jsonDiff/helper';
 
-import { getBaseName } from '../utils/help';
-
 import { LGTemplateFields, LUSDKKinds } from './constants';
 import { getContainsLuName, getFeildLgRefName, recognizerType } from './helper';
 
-type DialogResourceOptions = {
-  lgFileResolver: any;
-  luFileResolver: any;
+export type DialogResourceOptions = {
+  lgFiles: LgFile[];
+  luFiles: LuFile[];
   path?: string;
 };
 
@@ -24,14 +22,14 @@ export function DialogResource(
   dialog: {
     [key: string]: any;
   },
-  { lgFileResolver, luFileResolver, path }: DialogResourceOptions
+  { lgFiles, luFiles, path }: DialogResourceOptions
 ): {
   lg: LgTemplate[];
   lu: LuIntentSection[];
 } {
-  const lgFileName = typeof dialog.generator === 'string' ? dialog.generator : '';
-  const lgFileId = getBaseName(lgFileName, '.lg');
-  const allLGTemplates = lgFileResolver(lgFileId)?.templates;
+  const allLGTemplates = lgFiles.reduce((result: LgTemplate[], { templates }) => {
+    return result.concat(templates);
+  }, []);
 
   let allLUIntents;
 
@@ -44,9 +42,9 @@ export function DialogResource(
       };
     });
   } else if (intentType === SDKKinds.LuisRecognizer) {
-    const luFileName = typeof dialog.recognizer === 'string' ? dialog.recognizer : '';
-    const luFileId = getBaseName(luFileName, '.lu');
-    allLUIntents = luFileResolver(luFileId)?.intents;
+    allLUIntents = luFiles.reduce((result: LuIntentSection[], { intents }) => {
+      return result.concat(intents);
+    }, []);
   }
 
   const lg: LgTemplate[] = [];

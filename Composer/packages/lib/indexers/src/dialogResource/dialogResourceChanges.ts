@@ -33,7 +33,7 @@ function luListResourceChanges(list1, list2): ILUResourceChanges {
   };
 }
 
-export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver }): IResourceChanges {
+export function DialogResourceChanges(dialog1, dialog2, { lgFiles, luFiles }): IResourceChanges {
   const changes = {
     lg: {
       adds: [],
@@ -53,7 +53,7 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
   } as IResourceChanges;
   // find all in dialog1, treat as `adds`
   if (!dialog2) {
-    const { lg, lu } = DialogResource(dialog1, { lgFileResolver, luFileResolver });
+    const { lg, lu } = DialogResource(dialog1, { lgFiles, luFiles });
     changes.lg.adds === lg;
     changes.lu.adds === lu;
     return changes;
@@ -64,8 +64,8 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
   changes.dialog.updates.push(...updates);
   for (const item of updates) {
     const { path } = item;
-    const { lg: prevLg, lu: prevLu } = DialogResource(dialog1, { lgFileResolver, luFileResolver, path });
-    const { lg: currLg, lu: currLu } = DialogResource(dialog2, { lgFileResolver, luFileResolver, path });
+    const { lg: prevLg, lu: prevLu } = DialogResource(dialog1, { lgFiles, luFiles, path });
+    const { lg: currLg, lu: currLu } = DialogResource(dialog2, { lgFiles, luFiles, path });
     const lgChanges = lgListResourceChanges(prevLg, currLg);
     const luChanges = luListResourceChanges(prevLu, currLu);
 
@@ -80,7 +80,7 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
   for (const item of deletes) {
     const { path } = item;
 
-    const { lg, lu } = DialogResource(dialog1, { lgFileResolver, luFileResolver, path });
+    const { lg, lu } = DialogResource(dialog1, { lgFiles, luFiles, path });
     changes.lg.deletes.push(...lg.map(({ name }) => name));
     changes.lu.deletes.push(...lu.map(({ Name }) => Name));
   }
@@ -88,7 +88,7 @@ export function DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFile
   for (const item of adds) {
     const { path } = item;
 
-    const copiedResource = copyAdaptiveNodes(dialog2, { lgFileResolver, luFileResolver, path });
+    const copiedResource = copyAdaptiveNodes(dialog2, { lgFiles, luFiles, path });
     changes.dialog.adds.push({ path, value: copiedResource.newNodes });
     changes.lg.adds.push(...copiedResource.lg);
     changes.lu.adds.push(...copiedResource.lu);

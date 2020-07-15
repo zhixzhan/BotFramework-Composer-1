@@ -4,17 +4,17 @@ import has from 'lodash/has';
 import set from 'lodash/set';
 import get from 'lodash/get';
 import cloneDeep from 'lodash/cloneDeep';
+import isEmpty from 'lodash/isEmpty';
 import { JsonWalk, VisitorFunc, getDesignerId, LgTemplate, LuIntentSection, LgTemplateRef } from '@bfc/shared';
-import { isEmpty } from 'lodash';
 import { getWithJsonPath } from '@bfc/shared/lib/jsonDiff/helper';
 
 import { LGTemplateFields } from './constants';
-import { DialogResource } from './dialogResource';
+import { DialogResource, DialogResourceOptions } from './dialogResource';
 import { getContainsLuName, getFeildLgRefName } from './helper';
 
 export function copyAdaptiveNodes(
   dialog,
-  { lgFileResolver, luFileResolver, path }
+  { lgFiles, luFiles, path }: DialogResourceOptions
 ): {
   newNodes: any;
   lg: LgTemplate[];
@@ -23,7 +23,7 @@ export function copyAdaptiveNodes(
   const lg: LgTemplate[] = [];
   const lu: LuIntentSection[] = [];
 
-  const resource = DialogResource(dialog, { lgFileResolver, luFileResolver, path });
+  const resource = DialogResource(dialog, { lgFiles, luFiles, path });
 
   const jsonData = path ? getWithJsonPath(dialog, path) : dialog;
 

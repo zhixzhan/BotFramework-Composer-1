@@ -39,19 +39,7 @@ export const createDialog: ActionCreator = async (store, { id, content }) => {
 
 export const updateDialogBase: ActionCreator = async (store, { id, content }, lastState) => {
   const state = store.getState();
-  const { lgFiles, luFiles, dialogs, locale } = state;
-
-  const lgFileResolver = function (id: string) {
-    const fileId = id.includes('.') ? id : `${id}.${locale}`;
-    const files = lastState?.lgFiles ?? lgFiles;
-    return files.find(({ id }) => id === fileId);
-  };
-  const luFileResolver = function (id: string) {
-    const fileId = id.includes('.') ? id : `${id}.${locale}`;
-    const files = lastState?.luFiles ?? luFiles;
-    return files.find(({ id }) => id === fileId);
-  };
-
+  const { lgFiles, luFiles, dialogs, locale } = lastState || state;
   const dialogFile = dialogs.find((f) => f.id === id);
 
   if (!dialogFile) {
@@ -61,7 +49,7 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }, la
   const dialogLgFile = lgFiles.find((f) => f.id === `${id}.${locale}`);
   const dialogLuFile = luFiles.find((f) => f.id === `${id}.${locale}`);
   const prevContent = dialogFile.content;
-  const changes = DialogResourceChanges(prevContent, content, { lgFileResolver, luFileResolver });
+  const changes = DialogResourceChanges(prevContent, content, { lgFiles, luFiles });
 
   console.log('Resource changes: ', changes);
 
@@ -106,7 +94,7 @@ export const updateDialogBase: ActionCreator = async (store, { id, content }, la
       ...dialogFile,
       ...dialogIndexer.parse(dialogFile.id, newDialog.content),
     };
-    newDialog.diagnostics = validateDialog(newDialog, state.schemas.sdk.content, state.lgFiles, state.luFiles);
+    newDialog.diagnostics = validateDialog(newDialog, state.schemas.sdk.content, lgFiles, luFiles);
   }
 
   store.dispatch({

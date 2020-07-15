@@ -18,32 +18,36 @@ const dialogFile = JSON.parse(
   )
 );
 
-const lgFile = lgIndexer.parse(
-  fs.readFileSync(
-    path.join(
-      __dirname,
-      '../_bots_/_test_todobotwithluissample/language-generation/en-us/todobotwithluissample.en-us.lg'
+const lgFiles = lgIndexer.index([
+  {
+    name: 'todobotwithluissample.en-us.lg',
+    content: fs.readFileSync(
+      path.join(
+        __dirname,
+        '../_bots_/_test_todobotwithluissample/language-generation/en-us/todobotwithluissample.en-us.lg'
+      ),
+      'utf-8'
     ),
-    'utf-8'
-  )
-);
-const luFile = luIndexer.parse(
-  fs.readFileSync(
-    path.join(
-      __dirname,
-      '../_bots_/_test_todobotwithluissample/language-understanding/en-us/todobotwithluissample.en-us.lu'
+    path: '',
+    relativePath: '',
+    lastModified: '',
+  },
+]);
+const luFiles = luIndexer.index([
+  {
+    name: 'todobotwithluissample.en-us.lu',
+    content: fs.readFileSync(
+      path.join(
+        __dirname,
+        '../_bots_/_test_todobotwithluissample/language-understanding/en-us/todobotwithluissample.en-us.lu'
+      ),
+      'utf-8'
     ),
-    'utf-8'
-  )
-);
-
-const lgFileResolver = () => {
-  return lgFile;
-};
-
-const luFileResolver = () => {
-  return luFile;
-};
+    path: '',
+    relativePath: '',
+    lastModified: '',
+  },
+]);
 
 describe('Rsources in dialog', () => {
   it('should find LG/LU resource in part of dialog', () => {
@@ -58,7 +62,7 @@ describe('Rsources in dialog', () => {
       },
     ];
 
-    const resources = DialogResource(dialog1, { lgFileResolver, luFileResolver });
+    const resources = DialogResource(dialog1, { lgFiles, luFiles });
 
     expect(resources.lg.length).toEqual(1);
     expect(resources.lg[0].name).toEqual('SendActivity_037398');
@@ -68,7 +72,7 @@ describe('Rsources in dialog', () => {
 
   it('should find LG/LU resource in dialog', () => {
     const dialog = cloneDeep(dialogFile);
-    const resources = DialogResource(dialog, { lgFileResolver, luFileResolver });
+    const resources = DialogResource(dialog, { lgFiles, luFiles });
     expect(dialog).toEqual(dialogFile);
     expect(resources.lg.length).toEqual(9);
     expect(resources.lg[4].name).toEqual('SendActivity_037398');
@@ -98,7 +102,7 @@ describe('Rsources in dialog', () => {
 
     const dialog2 = JsonInsert(dialog, insert1);
 
-    const resources = DialogResource(dialog2, { lgFileResolver, luFileResolver });
+    const resources = DialogResource(dialog2, { lgFiles, luFiles });
     expect(dialog).toEqual(dialogFile);
     expect(resources.lg.length).toEqual(10);
     expect(resources.lg[5].name).toEqual('SendActivity_037398');

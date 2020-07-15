@@ -19,32 +19,36 @@ const dialogFile = JSON.parse(
   )
 );
 
-const lgFile = lgIndexer.parse(
-  fs.readFileSync(
-    path.join(
-      __dirname,
-      '../_bots_/_test_todobotwithluissample/language-generation/en-us/todobotwithluissample.en-us.lg'
+const lgFiles = lgIndexer.index([
+  {
+    name: 'todobotwithluissample.en-us.lg',
+    content: fs.readFileSync(
+      path.join(
+        __dirname,
+        '../_bots_/_test_todobotwithluissample/language-generation/en-us/todobotwithluissample.en-us.lg'
+      ),
+      'utf-8'
     ),
-    'utf-8'
-  )
-);
-const luFile = luIndexer.parse(
-  fs.readFileSync(
-    path.join(
-      __dirname,
-      '../_bots_/_test_todobotwithluissample/language-understanding/en-us/todobotwithluissample.en-us.lu'
+    path: '',
+    relativePath: '',
+    lastModified: '',
+  },
+]);
+const luFiles = luIndexer.index([
+  {
+    name: 'todobotwithluissample.en-us.lu',
+    content: fs.readFileSync(
+      path.join(
+        __dirname,
+        '../_bots_/_test_todobotwithluissample/language-understanding/en-us/todobotwithluissample.en-us.lu'
+      ),
+      'utf-8'
     ),
-    'utf-8'
-  )
-);
-
-const lgFileResolver = () => {
-  return lgFile;
-};
-
-const luFileResolver = () => {
-  return luFile;
-};
+    path: '',
+    relativePath: '',
+    lastModified: '',
+  },
+]);
 
 describe('Copy/Move dialog action node', () => {
   it('Copy SendActivity', () => {
@@ -64,7 +68,7 @@ describe('Copy/Move dialog action node', () => {
 
     const dialog2 = JsonInsert(dialog1, insert1);
 
-    const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    const changes = DialogResourceChanges(dialog1, dialog2, { lgFiles, luFiles });
     expect(dialog1).toEqual(dialogFile);
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(1);
@@ -93,7 +97,7 @@ describe('Copy/Move dialog action node', () => {
 
     const dialog2 = JsonInsert(dialog1, insert1);
 
-    const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    const changes = DialogResourceChanges(dialog1, dialog2, { lgFiles, luFiles });
     expect(dialog1).toEqual(dialogFile);
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(1);
@@ -116,7 +120,7 @@ describe('Copy/Move dialog action node', () => {
 
     const dialog2 = JsonSet(dialog1, insert1);
 
-    const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    const changes = DialogResourceChanges(dialog1, dialog2, { lgFiles, luFiles });
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(0);
     expect(changes.lg.deletes.length).toEqual(5);
@@ -138,7 +142,7 @@ describe('Copy/Move dialog action node', () => {
 
     const dialog2 = JsonInsert(dialog1, insert1);
 
-    const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    const changes = DialogResourceChanges(dialog1, dialog2, { lgFiles, luFiles });
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(4);
     expect(changes.lg.deletes.length).toEqual(0);
@@ -166,7 +170,7 @@ describe('Copy/Move dialog action node', () => {
 
     const dialog2 = JsonSet(dialog1, insert1);
 
-    const changes = DialogResourceChanges(dialog1, dialog2, { lgFileResolver, luFileResolver });
+    const changes = DialogResourceChanges(dialog1, dialog2, { lgFiles, luFiles });
     expect(changes.lg.updates.length).toEqual(0);
     expect(changes.lg.adds.length).toEqual(0);
     expect(changes.lg.deletes.length).toEqual(1);
