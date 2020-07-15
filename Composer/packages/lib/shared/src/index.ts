@@ -8,7 +8,6 @@ import * as dialogUtils from './dialogUtils';
 formatMessage.setup({ missingTranslation: 'ignore' });
 
 export * from './constant';
-export * from './copyUtils';
 export * from './dialogFactory';
 export * from './functionUtils';
 export * from './generateUniqueId';
